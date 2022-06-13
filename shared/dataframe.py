@@ -28,6 +28,7 @@ List related:
     mean_list
         FUNCTION: calculate mean list from a list of lists and its confidence interval, excluding 0 numbers
         SYNTAX:   mean_list(lst: list)
+        
     list_exclude_zero
         FUNCTION: exclude zero from list y and corresponding index in x
         SYNTAX:   list_exclude_zero(x: list, y: list)
@@ -51,7 +52,23 @@ List related:
     list_peak_center_with_control
         FUNCTION: center the maximum number of given list lst, shift lst_ctrl based on maximum from lst
         SYNTAX:   list_peak_center_with_control(lst: list, lst_ctrl: list)
-
+    
+    list_sum
+        FUNCTION: calculate cumulative list based on original list sum[0:i]
+        SYNTAX:   list_sum(lst: list)
+    
+    list_fill_with_num
+        FUNCTION: fill given length to the same maximum length with number filled_num
+        SYNTAX:   list_fill_with_num(lst: list, filled_num: float)
+    
+    list_addup_from_df(df: pd.DataFrame, column: str)
+        FUNCTION: add up all the elements from multiple lists in df[column]
+        SYNTAX:   list_addup_from_df(df: pd.DataFrame, column: str)
+    
+    list_fill_with_last_num(lst: list)
+        FUNCTION: fill given length to the same maximum length with last number
+        SYNTAX:   list_fill_with_last_num(lst: list)
+        
 Matrix related:
     matrix_pad_with_zeros
         FUNCTION: pad matrix with trailing zeros
@@ -61,7 +78,10 @@ Dataframe related:
     radial_distribution
         FUNCTION: analyze feature_y distribution based on feature_x binning
         SYNTAX:   radial_distribution(df: pd.DataFrame, feature_x, feature_y, interval: float, feature_max: float)
-
+    
+    filter_small_from_lst_in_df
+        FUNCTION: filter smaller numbers in lists in df[column]
+        SYNTAX:   filter_small_from_lst_in_df(df: pd.DataFrame, column: str, threshold: float)
 
 """
 
@@ -331,8 +351,89 @@ def list_peak_center_with_control(lst: list, lst_ctrl: list):
 
 
 def list_sum(lst: list):
+    """
+    Calculate cumulative list based on original list sum[0:i]
+
+    :param lst: list, input list
+    :return:
+    """
     out = []
     for i in range(len(lst)+1):
         out.append(sum(lst[0:i]))
+
+    return out
+
+
+def list_fill_with_num(lst: list, filled_num: float):
+    """
+    Fill given length to the same maximum length with number filled_num
+
+    :param lst: list, input list
+                [[...], [...], [...], [...],...[...]]
+    :param filled_num: float, filling number
+    :return:
+    """
+    out = []
+    len_lst = [len(lst[i]) for i in range(len(lst))]
+    max_len = max(len_lst)
+    for i in range(len(lst)):
+        if len(lst[i]) < max_len:
+            temp = lst[i] + [filled_num]*(max_len-len(lst[i]))
+            out.append(temp)
+        else:
+            out.append(lst[i])
+
+    return out
+
+
+def list_addup_from_df(df: pd.DataFrame, column: str):
+    """
+    Add up all the elements from multiple lists in df[column]
+
+    :param df: pd.DataFrame
+    :param column: str, column name
+    :return:
+    """
+    out = []
+    for i in range(len(df)):
+        out = out + df[column][i]
+
+    return out
+
+
+def filter_small_from_lst_in_df(df: pd.DataFrame, column: str, threshold: float):
+    """
+    Filter smaller numbers in lists in df[column]
+
+    :param df: pd.DataFrame
+    :param column: str, column name
+    :param threshold: float, filter threshold
+    :return:
+    """
+    out = []
+    for i in range(len(df)):
+        temp = [df[column][i][j] for j in range(len(df[column][i])) if df[column][i][j] > threshold]
+        out.append(temp)
+
+    return out
+
+
+def list_fill_with_last_num(lst: list):
+    """
+    Fill given length to the same maximum length with last number
+
+    :param lst: list, input list
+                [[...], [...], [...], [...],...[...]]
+    :return:
+    """
+    out = []
+    len_lst = [len(lst[i]) for i in range(len(lst))]
+    max_len = max(len_lst)
+    for i in range(len(lst)):
+        if len(lst[i]) < max_len:
+            temp = lst[i] + [lst[i][-1]]*(max_len-len(lst[i]))
+            out.append(temp)
+        else:
+            out.append(lst[i])
 
     return out
