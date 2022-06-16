@@ -123,7 +123,7 @@ feature = ['z_ratio', 'limit', 'area_nuclear', 'mean_int_DNAFISH', 'mean_int_DNA
            'mean_int_ecDNA', 'mean_int_ecDNA_norm', 'total_int_ecDNA', 'total_int_ecDNA_norm', 'area_ratio_ecDNA',
            'max_area_ecDNA', 'max_area_ratio_ecDNA', 'n_ecDNA', 'percentage_area_n_half',
            'percentage_area_ratio_n_half', 'percentage_int_n_half', 'percentage_int_norm_n_half', 'cum_area_n_half',
-           'cum_area_ratio_n_half', 'cum_int_n_half', 'cum_int_norm_n_half']
+           'cum_area_ratio_n_half', 'cum_int_n_half', 'cum_int_norm_n_half', 'mean_int_bg']
 
 for i in feature:
     f = i
