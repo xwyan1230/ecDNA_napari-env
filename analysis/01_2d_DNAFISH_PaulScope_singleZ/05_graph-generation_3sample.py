@@ -34,23 +34,11 @@ data3['area_individual_ecDNA_hub'] = dat.filter_small_from_lst_in_df(data3, 'are
 data1_area_ind_ecDNA = dat.list_addup_from_df(data1, 'area_individual_ecDNA')
 data2_area_ind_ecDNA = dat.list_addup_from_df(data2, 'area_individual_ecDNA')
 data3_area_ind_ecDNA = dat.list_addup_from_df(data3, 'area_individual_ecDNA')
+data1_mean_int_ind_ecDNA = dat.list_addup_from_df(data1, 'mean_int_individual_ecDNA')
+data2_mean_int_ind_ecDNA = dat.list_addup_from_df(data2, 'mean_int_individual_ecDNA')
+data3_mean_int_ind_ecDNA = dat.list_addup_from_df(data3, 'mean_int_individual_ecDNA')
 
-# hist0
-"""f = 'n_ecDNA'
-
-plt.subplots(figsize=(6, 4))
-weights1 = np.ones_like(data1[f]) / len(data1)
-weights2 = np.ones_like(data2[f]) / len(data2)
-weights3 = np.ones_like(data3[f]) / len(data3)
-plt.hist([data1[f], data2[f], data3[f]], weights=[weights1, weights2, weights3], color=hist_colors,
-         edgecolor=(0.2, 0.2, 0.2), label=sample, bins=20)
-plt.xlabel(f)
-plt.ylabel('Probability')
-plt.legend()
-plt.savefig('%s/%s_%s_vs_%s_%s.pdf' % (master_folder, f, sample[0], sample[1], sample[2]))
-plt.close()"""
-
-# hist0-batch
+# single value feature
 feature = ['n_ecDNA', 'max_area_ecDNA', 'area_nuclear', 'total_int_DNAFISH', 'total_int_nuclear', 'total_area_ecDNA',
            'total_int_ecDNA']
 
@@ -68,26 +56,37 @@ for i in feature:
     plt.savefig('%s/%s_%s_vs_%s_%s.pdf' % (master_folder, f, sample[0], sample[1], sample[2]))
     plt.close()
 
-# hist1
-d1 = [i for i in data1_area_ind_ecDNA if i > 100]
-d2 = [i for i in data2_area_ind_ecDNA if i > 100]
-d3 = [i for i in data3_area_ind_ecDNA if i > 100]
+# multiple value feature
+index1 = np.array(data1_area_ind_ecDNA) > 100
+index2 = np.array(data2_area_ind_ecDNA) > 100
+index3 = np.array(data3_area_ind_ecDNA) > 100
 
-xlabel = 'area_individual_ecDNA (>100)'
+feature = ['area', 'mean_int']
+for f in feature:
+    if f == 'area':
+        d1 = np.array(data1_area_ind_ecDNA)[index1]
+        d2 = np.array(data2_area_ind_ecDNA)[index2]
+        d3 = np.array(data3_area_ind_ecDNA)[index3]
+        xlabel = 'area_individual_ecDNA (>100)'
+    elif f == 'mean_int':
+        d1 = np.array(data1_mean_int_ind_ecDNA)[index1]
+        d2 = np.array(data2_mean_int_ind_ecDNA)[index2]
+        d3 = np.array(data3_mean_int_ind_ecDNA)[index3]
+        xlabel = 'mean_int_individual_ecDNA (>100)'
 
-plt.subplots(figsize=(6, 4))
-weights1 = np.ones_like(d1) / len(d1)
-weights2 = np.ones_like(d2) / len(d2)
-weights3 = np.ones_like(d3) / len(d3)
-plt.hist([d1, d2, d3], weights=[weights1, weights2, weights3], color=hist_colors,
-         edgecolor=(0.2, 0.2, 0.2), label=sample, bins=20)
-plt.xlabel(xlabel)
-plt.ylabel('Probability')
-plt.legend()
-plt.savefig('%s/individual_ecDNA_%s_vs_%s_%s.pdf' % (master_folder, sample[0], sample[1], sample[2]))
-plt.close()
+    plt.subplots(figsize=(6, 4))
+    weights1 = np.ones_like(d1) / len(d1)
+    weights2 = np.ones_like(d2) / len(d2)
+    weights3 = np.ones_like(d3) / len(d3)
+    plt.hist([d1, d2, d3], weights=[weights1, weights2, weights3], color=hist_colors,
+             edgecolor=(0.2, 0.2, 0.2), label=sample, bins=20)
+    plt.xlabel(xlabel)
+    plt.ylabel('Probability')
+    plt.legend()
+    plt.savefig('%s/individual_ecDNA_%s_%s_vs_%s_%s.pdf' % (master_folder, f, sample[0], sample[1], sample[2]))
+    plt.close()
 
-# curve1
+# angle curve
 f = 'angle_curve_DNAFISH'
 x = np.arange(0, 360, 1)
 x_label = 'degree'
@@ -116,7 +115,7 @@ plt.legend()
 plt.savefig('%s/%s_%s_vs_%s_vs_%s.pdf' % (master_folder, f, sample[0], sample[1], sample[2]))
 plt.close()
 
-# curve2
+# cumulative curve
 feature = ['cum_int_ind_ecDNA_filled', 'cum_area_ind_ecDNA_filled']
 for f in feature:
     x_label = 'number of ecDNA hub'
@@ -151,3 +150,5 @@ for f in feature:
     # plt.show()
     plt.savefig('%s/%s_%s_vs_%s_vs_%s.pdf' % (master_folder, f, sample[0], sample[1], sample[2]))
     plt.close()
+
+print("DONE!")
