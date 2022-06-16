@@ -8,11 +8,11 @@ import napari
 # INPUT PARAMETERS
 # file info
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220325_Natasha_THZ1/"
-sample = '72hrJQ1'
+sample = '72hr_100nMTHZ'
 raw_folder = '01_raw'
 seg_folder = '02_seg'
-total_fov = 18
-total_z = 23
+total_fov = 16
+total_z = 18
 # cell info
 pixel_size = 102  # nm (sp8 confocal 3144x3144:58.7, Paul scope 2048x2048:102)
 cell_avg_size = 10  # um (Colo)
@@ -30,6 +30,8 @@ data_c['centroid_y'] = [data_c['centroid_nuclear'][i][1] for i in range(len(data
 
 data = pd.DataFrame(columns=['nuclear',
                              'FOV',
+                             'z_min',
+                             'z_max',
                              'z',
                              'label_nuclear',
                              'centroid_nuclear',
@@ -93,12 +95,16 @@ for fov in range(total_fov):
                     mean_int_DNAFISH_over_limit.append(np.mean(DNAFISH_over_limit))
 
             data_nucleus.loc[:, ['mean_intensity_over_limit']] = mean_int_DNAFISH_over_limit
+            z_min = data_nucleus['z'].tolist()[0]
+            z_max = data_nucleus['z'].tolist()[-1]
             data_nucleus = data_nucleus.sort_values(by='mean_intensity_over_limit', ascending=False)
             data_nucleus.reset_index(drop=True, inplace=True)
 
-            data.loc[len(data.index)] = [i, fov, data_nucleus['z'].tolist()[0],
+            data.loc[len(data.index)] = [i, fov, z_min, z_max, data_nucleus['z'].tolist()[0],
                                          data_nucleus['label_nuclear'].tolist()[0],
                                          data_nucleus['centroid_nuclear'].tolist()[0], limit]
+
+data['z_ratio'] = (data['z'] - data['z_min'])/(data['z_max']-data['z_min'])
 
 data.to_csv('%s%s/%s_z.txt' % (master_folder, sample, sample), index=False, sep='\t')
 
