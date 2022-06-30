@@ -14,8 +14,8 @@ import seaborn as sns
 # file info
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220325_Natasha_THZ1/"
 sample = ['DMSO', '72hr_100nMTHZ']
-hist_colors = [(0.90, 0.90, 0.90), (0.95, 0.50, 0.50)]
-line_colors = [(0.30, 0.30, 0.30), (0.85, 0.35, 0.25)]
+hist_colors = [(0.90, 0.90, 0.90), (0.65, 0.90, 0.90)]
+line_colors = [(0.30, 0.30, 0.30), (0.30, 0.70, 0.70)]
 # '#FFA500', '#40E0D0', '#DA70D6', '#00CED1'
 feature = ['radial_curve_DNAFISH', 'radial_curve_nuclear', 'angle_curve_DNAFISH', 'angle_curve_nuclear',
            'area_individual_ecDNA', 'area_ratio_individual_ecDNA', 'mean_int_individual_ecDNA',
@@ -27,8 +27,8 @@ feature = ['radial_curve_DNAFISH', 'radial_curve_nuclear', 'angle_curve_DNAFISH'
            'angle_curve_DNAFISH_bg_correct', 'radial_curve_DNAFISH_bg_correct']
 
 # LOAD FILE
-data1 = pd.read_csv('%s%s/%s.txt' % (master_folder, sample[0], sample[0]), na_values=['.'], sep='\t')
-data2 = pd.read_csv('%s%s/%s.txt' % (master_folder, sample[1], sample[1]), na_values=['.'], sep='\t')
+data1 = pd.read_csv('%s%s/%s_project.txt' % (master_folder, sample[0], sample[0]), na_values=['.'], sep='\t')
+data2 = pd.read_csv('%s%s/%s_project.txt' % (master_folder, sample[1], sample[1]), na_values=['.'], sep='\t')
 for f in feature:
     data1[f] = [dat.str_to_float(data1[f][i]) for i in range(len(data1))]
     data2[f] = [dat.str_to_float(data2[f][i]) for i in range(len(data2))]
@@ -53,7 +53,7 @@ data2['sample'] = [sample[1]] * len(data2)
 data = pd.concat([data1, data2], axis=0, ignore_index=True)
 data_feature = data.copy()
 all_feature = data.columns
-feature = ['z_ratio', 'area_nuclear', 'mean_int_DNAFISH_norm', 'radial_center', 'radial_edge',
+feature = ['area_nuclear', 'mean_int_DNAFISH_norm', 'radial_center', 'radial_edge',
            'area_ratio_ecDNA', 'mean_int_ecDNA_norm', 'max_area_ratio_ecDNA', 'n_ecDNA', 'cum_area_ratio_n_half',
            'cum_int_norm_n_half']
 drop_feature = [i for i in all_feature if i not in feature]
@@ -117,7 +117,7 @@ plt.close()
 
 # single value feature
 print("Plotting single value feature...")
-feature = ['z_ratio', 'limit', 'area_nuclear', 'mean_int_DNAFISH', 'mean_int_DNAFISH_norm', 'mean_int_nuclear',
+feature = ['area_nuclear', 'mean_int_DNAFISH', 'mean_int_DNAFISH_norm', 'mean_int_nuclear',
            'total_int_DNAFISH', 'total_int_DNAFISH_norm',
            'total_int_nuclear', 'radial_center', 'radial_edge', 'total_area_ecDNA', 'area_ratio_ecDNA',
            'mean_int_ecDNA', 'mean_int_ecDNA_norm', 'total_int_ecDNA', 'total_int_ecDNA_norm', 'area_ratio_ecDNA',

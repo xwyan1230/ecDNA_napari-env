@@ -1,5 +1,5 @@
 from skimage.measure import label, regionprops
-from skimage.morphology import medial_axis, dilation, erosion, disk
+from skimage.morphology import medial_axis, dilation, erosion, disk, extrema
 import pandas as pd
 import numpy as np
 import shared.image as img
@@ -7,6 +7,7 @@ import skimage.io as skio
 import shared.dataframe as dat
 import random
 import shared.segmentation as seg
+from skimage import exposure
 import tifffile as tif
 import math
 import matplotlib.pyplot as plt
@@ -17,7 +18,7 @@ import napari
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220325_Natasha_THZ1/"
 sample = '72hr_100nMTHZ'
 raw_folder = '01_raw'
-total_fov = 16
+total_fov = 20
 # cell info
 pixel_size = 102  # nm (sp8 confocal 3144x3144:58.7, Paul scope 2048x2048:102)
 cell_avg_size = 10  # um (Colo)
@@ -100,11 +101,12 @@ for fov in range(total_fov):
     img_nuclear_seg_convex = dilation(img_nuclear_seg_convex, disk(n_nuclear_convex_dilation))
 
     nuclear_props = regionprops(label(img_nuclear_seg_convex))
+
     for i in range(len(nuclear_props)):
         original_centroid_nuclear = nuclear_props[i].centroid
         # get local images
         position = img.img_local_position(img_nuclear_seg_convex, original_centroid_nuclear, local_size)
-        local_nuclear_seg_convex = img.img_local_seg(img_nuclear_seg_convex, position, nuclear_props[i].label)
+        local_nuclear_seg_convex = img.img_local_seg_center(img_nuclear_seg_convex, position)
         local_nuclear_max = img_nuclear_max.copy()
         local_nuclear_max = local_nuclear_max[position[0]:position[1], position[2]:position[3]]
         local_DNAFISH_max = img_DNAFISH_max.copy()
@@ -113,7 +115,6 @@ for fov in range(total_fov):
         local_DNAFISH_std = local_DNAFISH_std[position[0]:position[1], position[2]:position[3]]
 
         # ecDNA segmentation
-        int_thresh = seg.get_bg_int([local_DNAFISH_std])[0]
         k_dots = 5000
         vector = []
         vector_cum_weight = []
@@ -122,9 +123,9 @@ for fov in range(total_fov):
             for n in range(len(local_nuclear_seg_convex[0])):
                 if local_nuclear_seg_convex[m][n] == 1:
                     vector.append([m, n])
-                    if local_DNAFISH_std[m][n] > int_thresh:
-                        weight = weight + (local_DNAFISH_std[m][n] - int_thresh)**2
+                    weight = weight + (local_DNAFISH_std[m][n])**2
                     vector_cum_weight.append(weight)
+
         if weight != 0:
             random_dot = random.choices(vector, cum_weights=vector_cum_weight, k=k_dots)
             img_dot = np.zeros_like(local_nuclear_seg_convex)
@@ -135,21 +136,26 @@ for fov in range(total_fov):
             img_dot_remove_bg = erosion(img_dot_remove_bg)
             img_dot_remove_bg = erosion(img_dot_remove_bg)
             img_dot_remove_bg = dilation(img_dot_remove_bg)
-            img_dot_remove_bg = dilation(img_dot_remove_bg)
             img_dot_seg = img_dot_remove_bg.copy()
             img_dot_seg[img_dot_remove_bg > 0] = 1
-            DNAFISH_seg, _ = seg.find_organelle(local_DNAFISH_std, 'na', extreme_val=50, bg_val=int_thresh,
-                                                min_size=0, max_size=10000)
+
+            DNAFISH_maxima = extrema.h_maxima(local_DNAFISH_std, 50)
+            DNAFISH_seg = np.zeros_like(local_DNAFISH_std)
+            DNAFISH_seg[DNAFISH_maxima == 1] = 1
+            DNAFISH_seg = dilation(DNAFISH_seg, disk(4))
+            DNAFISH_seg = erosion(DNAFISH_seg, disk(3))
             DNAFISH_seg[local_nuclear_seg_convex == 0] = 0
             ecDNA_seg = img_dot_seg.copy()
             ecDNA_seg[DNAFISH_seg == 1] = 1
             bg_seg = local_nuclear_seg_convex.copy()
             bg_seg[ecDNA_seg == 1] = 0
 
-            # background correction
             bg_local_DNAFISH = local_DNAFISH_max.copy()
             bg_local_DNAFISH[bg_seg == 0] = 0
             mean_int_bg = np.sum(bg_local_DNAFISH) / np.sum(bg_seg)
+
+            # background correction
+
             local_DNAFISH_bg_correct = local_DNAFISH_max.copy()
             local_DNAFISH_bg_correct = local_DNAFISH_bg_correct.astype(float) - mean_int_bg
             local_DNAFISH_bg_correct[local_DNAFISH_bg_correct < 0] = 0
@@ -285,7 +291,7 @@ for fov in range(total_fov):
                                          cum_int_ind_ecDNA_norm, cum_int_norm_n_half]
 
         else:
-            tif.imwrite('%s%s/%s_DNAFISH_fov%s_i%s.tif' % (master_folder, sample, sample, fov, i), local_DNAFISH_max)
+            plt.imsave('%s%s/%s_DNAFISH_fov%s_i%s.tiff' % (master_folder, sample, sample, fov, i), local_DNAFISH_max)
 
 data['max_area_ecDNA'] = [np.max(data['area_individual_ecDNA'][i]) for i in range(len(data))]
 data['max_area_ratio_ecDNA'] = data['max_area_ecDNA']/data['area_nuclear']
