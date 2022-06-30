@@ -15,7 +15,9 @@ import os
 # file info
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220526_flowFISH_topHits_screen/"
 sample = 'E6'
-save_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220526_flowFISH_topHits_screen/%s/" % sample
+save_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220526_flowFISH_topHits_screen/figures/%s/" % sample
+if not os.path.exists(save_folder):
+    os.makedirs(save_folder)
 
 # default setting
 control = ['E3', 'E4']

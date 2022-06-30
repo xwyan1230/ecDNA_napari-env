@@ -16,8 +16,6 @@ import napari
 # INPUT PARAMETERS
 # file info
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220526_flowFISH_topHits_screen/"
-sample_row = 'E'
-sample_num = '10'
 sample = 'E10'
 raw_folder = '01_raw'
 seg_folder = '02_seg'
@@ -29,7 +27,7 @@ z_size = 500  # nm (Paul scope)
 local_size = 100
 
 # LOAD Z FILE
-data_z = pd.read_csv('%s%s/%s/%s_z.txt' % (master_folder, sample_row, sample_num, sample), na_values=['.'], sep='\t')
+data_z = pd.read_csv('%s%s/%s/%s_z.txt' % (master_folder, sample[0], sample[1:], sample), na_values=['.'], sep='\t')
 data_z['centroid_nuclear'] = [dat.str_to_float(data_z['centroid_nuclear'][i]) for i in range(len(data_z))]
 
 data = pd.DataFrame(columns=['nuclear',
@@ -98,15 +96,15 @@ for i in range(len(data_z)):
 
     # load images
     im_z_stack_nuclear = skio.imread("%s%s/%s/%s/R%s_RAW_ch00.tif" %
-                                     (master_folder, sample_row, sample_num, raw_folder, fov + 1), plugin="tifffile")
+                                     (master_folder, sample[0], sample[1:], raw_folder, fov + 1), plugin="tifffile")
     im_z_stack_DNAFISH = skio.imread("%s%s/%s/%s/R%s_RAW_ch01.tif" %
-                                     (master_folder, sample_row, sample_num, raw_folder, fov + 1), plugin="tifffile")
+                                     (master_folder, sample[0], sample[1:], raw_folder, fov + 1), plugin="tifffile")
     im_z_stack_IF = skio.imread("%s%s/%s/%s/R%s_RAW_ch02.tif" %
-                                (master_folder, sample_row, sample_num, raw_folder, fov + 1), plugin="tifffile")
+                                (master_folder, sample[0], sample[1:], raw_folder, fov + 1), plugin="tifffile")
 
     total_z = im_z_stack_nuclear.shape[0]
     im_z_stack_seg_convex = skio.imread("%s%s/%s/%s/R%s_seg.tif" %
-                                        (master_folder, sample_row, sample_num, seg_folder, fov + 1), plugin="tifffile")
+                                        (master_folder, sample[0], sample[1:], seg_folder, fov + 1), plugin="tifffile")
 
     # get images for given z
     img_nuclear_seg_convex = im_z_stack_seg_convex[z_current]
@@ -315,7 +313,7 @@ for i in range(len(data_z)):
                                      cum_int_norm_n_half]
 
     else:
-        tif.imwrite('%s%s/%s/%s_DNAFISH_fov%s_z%s_i%s.tif' % (master_folder, sample_row, sample_num, sample, fov,
+        tif.imwrite('%s%s/%s/%s_DNAFISH_fov%s_z%s_i%s.tif' % (master_folder, sample[0], sample[1:], sample, fov,
                                                               z_current, label_nuclear), local_DNAFISH)
 
 
@@ -328,6 +326,6 @@ data['cum_area_ratio_ind_ecDNA_filled'] = dat.list_fill_with_last_num(data['cum_
 data['cum_int_ind_ecDNA_filled'] = dat.list_fill_with_last_num(data['cum_int_ind_ecDNA'])
 data['cum_int_ind_ecDNA_norm_filled'] = dat.list_fill_with_last_num(data['cum_int_ind_ecDNA_norm'])
 
-data.to_csv('%s%s/%s/%s.txt' % (master_folder, sample_row, sample_num, sample), index=False, sep='\t')
+data.to_csv('%s%s/%s/%s.txt' % (master_folder, sample[0], sample[1:], sample), index=False, sep='\t')
 
 print("DONE!")

@@ -8,8 +8,6 @@ import napari
 # INPUT PARAMETERS
 # file info
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220526_flowFISH_topHits_screen/"
-sample_row = 'E'
-sample_num = '10'
 sample = 'E10'
 raw_folder = '01_raw'
 seg_folder = '02_seg'
@@ -24,7 +22,7 @@ nuclear_centroid_searching_range = 25  # pixel
 local_size = 100
 
 # LOAD CENTROIDS FILE
-data_c = pd.read_csv('%s%s/%s/%s_centroids.txt' % (master_folder, sample_row, sample_num, sample), na_values=['.'],
+data_c = pd.read_csv('%s%s/%s/%s_centroids.txt' % (master_folder, sample[0], sample[1:], sample), na_values=['.'],
                      sep='\t')
 data_c['centroid_nuclear'] = [dat.str_to_float(data_c['centroid_nuclear'][i]) for i in range(len(data_c))]
 data_c['centroid_x'] = [data_c['centroid_nuclear'][i][0] for i in range(len(data_c))]
@@ -45,13 +43,13 @@ for fov in range(total_fov):
     print("Start nuclear analysis FOV %s/%s" % (fov + 1, total_fov))
     # load images
     im_z_stack_nuclear = skio.imread("%s%s/%s/%s/R%s_RAW_ch00.tif" %
-                                     (master_folder, sample_row, sample_num, raw_folder, fov + 1), plugin="tifffile")
+                                     (master_folder, sample[0], sample[1:], raw_folder, fov + 1), plugin="tifffile")
     im_z_stack_DNAFISH = skio.imread("%s%s/%s/%s/R%s_RAW_ch01.tif" %
-                                     (master_folder, sample_row, sample_num, raw_folder, fov + 1), plugin="tifffile")
+                                     (master_folder, sample[0], sample[1:], raw_folder, fov + 1), plugin="tifffile")
 
     total_z = im_z_stack_nuclear.shape[0]
     im_z_stack_seg_convex = skio.imread("%s%s/%s/%s/R%s_seg.tif" %
-                                     (master_folder, sample_row, sample_num, seg_folder, fov + 1), plugin="tifffile")
+                                     (master_folder, sample[0], sample[1:], seg_folder, fov + 1), plugin="tifffile")
     # identify z for given fov
     data_c_fov = data_c[data_c['FOV'] == fov]
     z_analyze = int(total_z/2)
@@ -117,6 +115,6 @@ for fov in range(total_fov):
                                              data_nucleus['label_nuclear'].tolist()[mid],
                                              data_nucleus['centroid_nuclear'].tolist()[mid], limit, z_ratio]
 
-data.to_csv('%s%s/%s/%s_z.txt' % (master_folder, sample_row, sample_num, sample), index=False, sep='\t')
+data.to_csv('%s%s/%s/%s_z.txt' % (master_folder, sample[0], sample[1:], sample), index=False, sep='\t')
 
 print("DONE!")
