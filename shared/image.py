@@ -119,6 +119,23 @@ def img_local_seg(img: np.array, position: list, label_number: int):
     return out
 
 
+def img_local_seg_center(img: np.array, position: list):
+    """
+    Generate local segmented image
+
+    :param img: np.array, original segmented image
+    :param position: list, position of local segmented image
+    :return:
+    """
+    temp = img.copy()
+    temp = temp[position[0]:position[1], position[2]:position[3]]
+    out = np.zeros_like(temp, dtype=float)
+    label_number = temp[int(out.shape[0]/2)][int(out.shape[1]/2)]
+    out[temp == label_number] = 1
+
+    return out
+
+
 def edge_from_seg(img: np.array):
     """
     Detect edge from 0,1 image

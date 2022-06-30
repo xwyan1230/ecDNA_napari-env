@@ -114,7 +114,10 @@ def str_to_float(string: str):
     :param string: str, string to be converted
     :return: out: list
     """
-    out = [float(i) for i in string[1:-1].split(', ')]
+    if len(string) > 2:
+        out = [float(i) for i in string[1:-1].split(', ')]
+    else:
+        out = []
     return out
 
 
