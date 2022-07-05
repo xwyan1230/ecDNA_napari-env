@@ -7,6 +7,7 @@ import skimage.io as skio
 import tifffile as tif
 import pandas as pd
 import napari
+import os
 
 # INPUT PARAMETERS
 # file info
@@ -15,6 +16,9 @@ sample = 'E10'
 raw_folder = '01_raw'
 save_folder = '02_seg'
 total_fov = 5
+save_path = "%s%s/%s/%s/" % (master_folder, sample[0], sample[1:], save_folder)
+if not os.path.exists(save_path):
+    os.makedirs(save_path)
 # cell info
 pixel_size = 102  # nm (sp8 confocal 3144x3144:58.7, Paul scope 2048x2048:102)
 cell_avg_size = 10  # um (Colo)
