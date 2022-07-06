@@ -16,9 +16,9 @@ import napari
 # INPUT PARAMETERS
 # file info
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220526_flowFISH_topHits_screen/"
-sample = 'E10'
+sample = 'B4'
 raw_folder = '01_raw'
-seg_folder = '02_seg'
+seg_folder = '02_seg_batch'
 # cell info
 pixel_size = 102  # nm (sp8 confocal 3144x3144:58.7, Paul scope 2048x2048:102)
 cell_avg_size = 10  # um (Colo)
@@ -29,6 +29,9 @@ local_size = 100
 # LOAD Z FILE
 data_z = pd.read_csv('%s%s/%s/%s_z.txt' % (master_folder, sample[0], sample[1:], sample), na_values=['.'], sep='\t')
 data_z['centroid_nuclear'] = [dat.str_to_float(data_z['centroid_nuclear'][i]) for i in range(len(data_z))]
+"""data_z_full = pd.read_csv('%s%s/%s/%s_z.txt' % (master_folder, sample[0], sample[1:], sample), na_values=['.'], sep='\t')
+data_z_full['centroid_nuclear'] = [dat.str_to_float(data_z_full['centroid_nuclear'][i]) for i in range(len(data_z_full))]
+data_z = data_z_full[data_z_full['z_ratio'] != 0].copy()"""
 
 data = pd.DataFrame(columns=['nuclear',
                              'FOV',
@@ -84,7 +87,10 @@ data = pd.DataFrame(columns=['nuclear',
                              'cum_int_ind_ecDNA',
                              'cum_int_n_half',
                              'cum_int_ind_ecDNA_norm',
-                             'cum_int_norm_n_half'])
+                             'cum_int_norm_n_half',
+                             'dis_to_hub_area',
+                             'dis_to_hub_int',
+                             'dis_to_hub_int_norm'])
 
 # IMAGING ANALYSIS
 for i in range(len(data_z)):
@@ -194,6 +200,7 @@ for i in range(len(data_z)):
         total_int_DNAFISH_norm = mean_int_DNAFISH_norm * area_nuclear
 
         n_ecDNA = len(ecDNA_props)
+        centroid_ind_ecDNA = [ecDNA_props[i].centroid for i in range(len(ecDNA_props))]
         area_ind_ecDNA = [ecDNA_props[i].area for i in range(len(ecDNA_props))]
         area_ratio_ind_ecDNA = list(np.array(area_ind_ecDNA) / area_nuclear)
         total_area_ecDNA = sum(area_ind_ecDNA)
@@ -233,6 +240,43 @@ for i in range(len(data_z)):
         cum_int_n_half = dat.find_pos(cum_int_ind_ecDNA[-1]/2, cum_int_ind_ecDNA)
         cum_int_ind_ecDNA_norm = dat.list_sum(total_int_ind_ecDNA_norm)
         cum_int_norm_n_half = dat.find_pos(cum_int_ind_ecDNA_norm[-1]/2, cum_int_ind_ecDNA_norm)
+
+        # distance from the hub
+        dis_to_hub_area = 0
+        dis_to_hub_int = 0
+        dis_to_hub_int_norm = 0
+        if n_ecDNA == 0:
+            dis_to_hub_area = -1
+            dis_to_hub_int = -1
+            dis_to_hub_int_norm = -1
+        elif n_ecDNA > 1:
+            ind_ecDNA = pd.DataFrame({'area': area_ind_ecDNA, 'total_int': total_int_ind_ecDNA,
+                                      'total_int_norm': total_int_ind_ecDNA_norm, 'centroid': centroid_ind_ecDNA})
+
+            ind_ecDNA_sort_area = ind_ecDNA.copy().sort_values(by='area', axis=0, ascending=False, inplace=False,
+                                                               ignore_index=True)
+            ind_ecDNA_sort_area['dis'] = \
+                [((ind_ecDNA_sort_area['centroid'][i][0] - ind_ecDNA_sort_area['centroid'][0][0]) ** 2 +
+                  (ind_ecDNA_sort_area['centroid'][i][1] - ind_ecDNA_sort_area['centroid'][0][1]) ** 2) ** 0.5
+                 for i in range(len(ind_ecDNA_sort_area))]
+
+            for ind in range(n_ecDNA-1):
+                dis_to_hub_area = dis_to_hub_area + ind_ecDNA_sort_area['area'][ind+1] / total_area_ecDNA * \
+                                  ind_ecDNA_sort_area['dis'][ind+1]
+
+            ind_ecDNA_sort_int = ind_ecDNA.copy().sort_values(by='total_int', axis=0, ascending=False, inplace=False,
+                                                              ignore_index=True)
+            ind_ecDNA_sort_int['dis'] = \
+                [((ind_ecDNA_sort_int['centroid'][i][0] - ind_ecDNA_sort_int['centroid'][0][0]) ** 2 +
+                  (ind_ecDNA_sort_int['centroid'][i][1] - ind_ecDNA_sort_int['centroid'][0][1]) ** 2) ** 0.5
+                 for i in range(len(ind_ecDNA_sort_int))]
+
+            for ind in range(n_ecDNA-1):
+                dis_to_hub_int = dis_to_hub_int + ind_ecDNA_sort_int['total_int'][ind+1] / total_int_ecDNA * \
+                                  ind_ecDNA_sort_int['dis'][ind+1]
+                dis_to_hub_int_norm = \
+                    dis_to_hub_int_norm + ind_ecDNA_sort_int['total_int_norm'][ind + 1] / total_int_ecDNA_norm * \
+                    ind_ecDNA_sort_int['dis'][ind + 1]
 
         # radial distribution
         local_nuclear_centroid = local_nuclear_props[0].centroid
@@ -310,12 +354,11 @@ for i in range(len(data_z)):
                                      cum_percentage_total_int_ind_ecDNA_norm, cum_percentage_total_int_norm_n_half,
                                      cum_area_ind_ecDNA, cum_area_n_half, cum_area_ratio_ind_ecDNA,
                                      cum_area_ratio_n_half, cum_int_ind_ecDNA, cum_int_n_half, cum_int_ind_ecDNA_norm,
-                                     cum_int_norm_n_half]
+                                     cum_int_norm_n_half, dis_to_hub_area, dis_to_hub_int, dis_to_hub_int_norm]
 
     else:
-        tif.imwrite('%s%s/%s/%s_DNAFISH_fov%s_z%s_i%s.tif' % (master_folder, sample[0], sample[1:], sample, fov,
+        plt.imsave('%s%s/%s/%s_DNAFISH_fov%s_z%s_i%s.tiff' % (master_folder, sample[0], sample[1:], sample, fov,
                                                               z_current, label_nuclear), local_DNAFISH)
-
 
 data['max_area_ecDNA'] = [np.max(data['area_individual_ecDNA'][i]+[0]) for i in range(len(data))]
 data['max_area_ratio_ecDNA'] = data['max_area_ecDNA']/data['area_nuclear']

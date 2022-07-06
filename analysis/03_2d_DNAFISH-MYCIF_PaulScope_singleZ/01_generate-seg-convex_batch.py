@@ -31,15 +31,14 @@ min_size_nuclear = (nuclear_size_range[0] * cell_avg_size * 1000/(pixel_size * 2
 max_size_nuclear = (nuclear_size_range[1] * cell_avg_size * 1000/(pixel_size * 2)) ** 2 * math.pi
 n_nuclear_convex_dilation = 3
 
-data = pd.DataFrame(columns=['FOV',
-                             'z',
-                             'label_nuclear',
-                             'centroid_nuclear',
-                             'mean_intensity_MYC_DNAFISH_in_nucleus'])
-
 # IMAGING ANALYSIS
 for sample in sample_lst:
     print("Start analyzing %s..." % sample)
+    data = pd.DataFrame(columns=['FOV',
+                                 'z',
+                                 'label_nuclear',
+                                 'centroid_nuclear',
+                                 'mean_intensity_MYC_DNAFISH_in_nucleus'])
     for fov in range(total_fov):
         print("Start nuclear segmentation FOV %s/%s" % (fov + 1, total_fov))
         # LOAD IMAGE

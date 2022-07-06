@@ -12,7 +12,7 @@ import os
 # INPUT PARAMETERS
 # file info
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220526_flowFISH_topHits_screen/"
-sample = 'E10'
+sample = 'B4'
 raw_folder = '01_raw'
 save_folder = '02_seg'
 total_fov = 5
