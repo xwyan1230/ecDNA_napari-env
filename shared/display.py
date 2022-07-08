@@ -25,7 +25,11 @@ get_p
 get_x
     FUNCTION: create pair-wise x value for -ln(p) plot
     SYNTAX:   get_x(inc: int, limit: int, repeat: int, offset: float)
-              
+
+plot_volcano_hit
+    FUNCTION: plot volcano plot for FRAP screen (with hit displayed)
+    SYNTAX:   plot_volcano_hit(pd_p: pd.DataFrame, pd_value: pd.DataFrame, pd_gamma: pd.DataFrame, feature: str, 
+              center: float, threshold: float, show_gene: str, save_path: str)
 """
 
 
@@ -107,3 +111,59 @@ def get_x(inc: int, limit: int, repeat: int, offset: float):
             x = i+offset
             out.append(x)
     return out
+
+
+def plot_volcano_hit(pd_p: pd.DataFrame, pd_value: pd.DataFrame, pd_gamma: pd.DataFrame, feature: str, center: float,
+                     threshold: float, show_gene: str, save_path: str):
+    """
+    Plot volcano plot for FRAP screen (with hit gene labeled)
+
+    :param pd_p: pd.DataFrame, -ln(p) value dataframe
+    :param pd_value: pd.DataFrame, average value dataframe
+    :param pd_gamma: pd.DataFrame, score gamma (value-center)*[-ln(p)] dataframe
+    :param feature: str, plotting feature, column name
+    :param center: float, center used for calculating gamma, get from volcano plot-sum
+    :param threshold: float, threshold used to call hit
+                      fold of value difference from center/ std(control values) * 3 (roughly -ln(0.05))
+    :param show_gene: str, only accepts 'N' or 'Y', whether display gene name on volcano plot
+    :param save_path: str, saving path
+    :return:
+    """
+    plt.figure(figsize=(9, 6))
+
+    ctrl_std = np.std(pd_value[pd_value['sample'].isin(['WT', 'NT', 'NTC1', 'NTC2', 'E3', 'E4'])][feature])
+    ishit = pd_gamma[feature] / ctrl_std >= threshold
+    isgene = ~pd_gamma['sample'].isin(['WT', 'NT', 'NTC1', 'NTC2', 'E3', 'E4'])
+    isNT = pd_gamma['sample'].isin(['NT', 'NTC1', 'NTC2', 'E3', 'E4'])
+    isWT = pd_gamma['sample'].isin(['WT'])
+
+    plt.scatter(pd_value[~ishit & isgene][feature], pd_p[~ishit & isgene][feature], s=6, c='#A9A9A9',
+                label='gene non-hit')
+    plt.scatter(pd_value[ishit & isgene][feature], pd_p[ishit & isgene][feature], s=6, c='#DC143C', label='gene hit')
+    plt.scatter(pd_value[~ishit & isNT][feature], pd_p[~ishit & isNT][feature], s=6, c='#FFD700', label='NT non-hit')
+    plt.scatter(pd_value[ishit & isNT][feature], pd_p[ishit & isNT][feature], s=6, c='#FF8C00', label='NT hit')
+    # plt.scatter(pd_value[~ishit & isWT][feature], pd_p[~ishit & isWT][feature], s=6, c='#DDA0DD', label='WT non-hit')
+    # plt.scatter(pd_value[ishit & isWT][feature], pd_p[ishit & isWT][feature], s=6, c='#8A2BE2', label='WT hit')
+
+    ymax = np.ceil(max(pd_p[feature])) * 1.02
+    xmin = min(pd_value[feature]) * 0.95
+    xmax = max(pd_value[feature]) * 1.1
+
+    plt.plot(np.linspace(xmin, xmax, 1000),
+             np.abs(threshold / np.linspace((xmin-center) / ctrl_std, (xmax-center) / ctrl_std, 1000)), 'k--', lw=.5)
+
+    if show_gene == 'Y':
+        x_lst = pd_value[ishit & isgene][feature].tolist()
+        y_lst = pd_p[ishit & isgene][feature].tolist()
+        gene_lst = pd_value[ishit & isgene]['sample'].tolist()
+        for i in range(len(x_lst)):
+            plt.text(x_lst[i], y_lst[i], gene_lst[i], fontsize=6)
+
+    plt.xlim((xmin, xmax))
+    plt.ylim((0, ymax))
+    plt.xlabel(feature)
+    plt.ylabel('-ln(p)')
+    plt.legend(loc=4, bbox_to_anchor=(0.7, 0, 0.3, 0.3))
+
+    plt.savefig('%s%s_hit.pdf' % (save_path, feature))
+    plt.close()
