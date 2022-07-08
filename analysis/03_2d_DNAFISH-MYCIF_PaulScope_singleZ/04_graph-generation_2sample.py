@@ -8,13 +8,14 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from pandas.plotting import parallel_coordinates
 import shared.display as dis
 import random
+import shared.math as mat
 import seaborn as sns
 import os
 
 # INPUT PARAMETERS
 # file info
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220526_flowFISH_topHits_screen/"
-sample = 'E6'
+sample = 'B10'
 save_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220526_flowFISH_topHits_screen/figures/%s/" % sample
 if not os.path.exists(save_folder):
     os.makedirs(save_folder)
@@ -88,7 +89,7 @@ data_feature = data.copy()
 all_feature = data.columns
 feature = ['z_ratio', 'area_nuclear', 'mean_int_DNAFISH_norm', 'mean_int_IF', 'radial_center', 'radial_edge',
            'area_ratio_ecDNA', 'mean_int_ecDNA_norm', 'max_area_ratio_ecDNA', 'n_ecDNA', 'cum_area_ratio_n_half',
-           'cum_int_norm_n_half']
+           'cum_int_norm_n_half', 'dis_to_hub_int_norm']
 drop_feature = [i for i in all_feature if i not in feature]
 data_feature = data_feature.drop(drop_feature, axis=1)
 
@@ -100,7 +101,7 @@ data_norm = pd.concat([data_feature_scale, data['sample_heatmap']], axis=1)
 # heat map
 plt.subplots(figsize=(6, 50))
 ax1 = sns.heatmap(data_norm, cbar=0, linewidths=2, vmax=3, vmin=-2, square=True, cmap='viridis')
-plt.savefig('%s/heatmap.pdf' % master_folder)
+plt.savefig('%s/heatmap.pdf' % save_folder)
 plt.close()
 
 # pca
@@ -118,7 +119,7 @@ plt.scatter(transformed[data['sample_heatmap'] == 1][0], transformed[data['sampl
             color=line_colors[1], alpha=0.5, s=10)
 
 plt.legend()
-plt.savefig('%s/pca.pdf' % master_folder)
+plt.savefig('%s/pca.pdf' % save_folder)
 plt.close()
 
 # lda
@@ -132,7 +133,7 @@ plt.scatter(lda_transformed[data['sample_heatmap'] == 1][0], lda_transformed[dat
             label='WT', c=line_colors[1], alpha=0.5, s=10)
 
 plt.legend()
-plt.savefig('%s/lda.pdf' % master_folder)
+plt.savefig('%s/lda.pdf' % save_folder)
 plt.close()
 
 # parallel coordinates
@@ -146,7 +147,7 @@ plt.subplots(figsize=(20, 4))
 parallel_coordinates(data_norm, 'sample', color=line_color_4, alpha=0.3)
 # Display legend and show plot
 plt.legend(loc=3)
-plt.savefig('%s/pc.pdf' % master_folder)
+plt.savefig('%s/pc.pdf' % save_folder)
 plt.close()
 
 # single value feature
@@ -157,7 +158,8 @@ feature = ['z_ratio', 'limit', 'area_nuclear', 'mean_int_DNAFISH', 'mean_int_DNA
            'mean_int_ecDNA', 'mean_int_ecDNA_norm', 'total_int_ecDNA', 'total_int_ecDNA_norm', 'area_ratio_ecDNA',
            'max_area_ecDNA', 'max_area_ratio_ecDNA', 'n_ecDNA', 'percentage_area_n_half',
            'percentage_area_ratio_n_half', 'percentage_int_n_half', 'percentage_int_norm_n_half', 'cum_area_n_half',
-           'cum_area_ratio_n_half', 'cum_int_n_half', 'cum_int_norm_n_half', 'bg_int', 'mean_int_IF', 'total_int_IF']
+           'cum_area_ratio_n_half', 'cum_int_n_half', 'cum_int_norm_n_half', 'bg_int', 'mean_int_IF', 'total_int_IF',
+           'dis_to_hub_area', 'dis_to_hub_int', 'dis_to_hub_int_norm']
 
 for i in feature:
     f = i
@@ -169,14 +171,14 @@ for i in feature:
     plt.xlabel(f)
     plt.ylabel('Probability')
     plt.legend()
-    plt.savefig('%s/%s_%s.pdf' % (master_folder, f, sample))
+    plt.savefig('%s/%s_%s.pdf' % (save_folder, f, sample))
     plt.close()
 
 # single value feature-p
 print("Plotting single value feature-p...")
 
 for f in feature:
-    dis.plot_minus_ln_p(5, 250, 50, f, data, control, sample, master_folder)
+    dis.plot_minus_ln_p(5, 250, 50, f, data, control, sample, save_folder)
 
 # multiple value feature
 print("Plotting multiple value feature...")
@@ -217,13 +219,41 @@ for f in feature:
     plt.xlabel(f)
     plt.ylabel('Probability')
     plt.legend()
-    plt.savefig('%s/%s_%s.pdf' % (master_folder, f, sample))
+    plt.savefig('%s/%s_%s.pdf' % (save_folder, f, sample))
     plt.close()
 
 # multiple value feature-p
 print("Plotting multiple value feature-p...")
 for f in feature:
-    dis.plot_minus_ln_p(5, 250, 50, f, data_m, control, sample, master_folder)
+    dis.plot_minus_ln_p(5, 250, 50, f, data_m, control, sample, save_folder)
+
+# scatter
+print("Plotting scatter images...")
+feature_x_lst = ['mean_int_ecDNA_norm']
+feature_y_lst = ['mean_int_IF']
+
+sns.set_palette(sns.color_palette(line_colors))
+data_part = data[(data['sample'] == sample) | (data['sample'] == 'WT')].copy()
+
+for feature_x in feature_x_lst:
+    for feature_y in feature_y_lst:
+        ax1 = sns.jointplot(data=data_part, x=feature_x, y=feature_y, hue='sample', alpha=0.7, s=10)
+
+        _, int_fit_r2_sample, int_fit_a_sample = \
+            mat.fitting_linear_b0(data[data['sample'] == sample][feature_x].tolist(),
+                                  data[data['sample'] == sample][feature_y].tolist())
+        _, int_fit_r2_WT, int_fit_a_WT = \
+            mat.fitting_linear_b0(data[data['sample'] == 'WT'][feature_x].tolist(),
+                                  data[data['sample'] == 'WT'][feature_y].tolist())
+
+        x = np.arange(0, 5000, 250)
+        y_sample = int_fit_a_sample * x
+        y_WT = int_fit_a_WT * x
+        ax1.ax_joint.plot(x, y_sample, linewidth=2, color=line_colors[0], linestyle='--')
+        ax1.ax_joint.plot(x, y_WT, linewidth=2, color=line_colors[1], linestyle='--')
+
+        plt.savefig('%scomparison_of_%s_vs_%s.pdf' % (save_folder, feature_x, feature_y))
+        plt.close()
 
 # angle curve
 print("Plotting angle curve...")
@@ -252,7 +282,7 @@ for f in feature:
     plt.xlabel(x_label)
     plt.ylabel(f)
     plt.legend()
-    plt.savefig('%s/%s_%s.pdf' % (master_folder, f, sample))
+    plt.savefig('%s/%s_%s.pdf' % (save_folder, f, sample))
     plt.close()
 
 # cumulative curve
@@ -284,7 +314,7 @@ for f in feature:
     plt.ylabel(f)
     plt.legend()
     # plt.show()
-    plt.savefig('%s/%s_%s.pdf' % (master_folder, f, sample))
+    plt.savefig('%s/%s_%s.pdf' % (save_folder, f, sample))
     plt.close()
 
 print("DONE!")

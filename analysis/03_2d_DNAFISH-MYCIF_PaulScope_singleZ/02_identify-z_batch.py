@@ -22,6 +22,7 @@ nuclear_centroid_searching_range = 25  # pixel
 local_size = 100
 
 for sample in sample_lst:
+    print("Start analyzing %s..." % sample)
     # LOAD CENTROIDS FILE
     data_c = pd.read_csv('%s%s/%s/%s_centroids.txt' % (master_folder, sample[0], sample[1:], sample), na_values=['.'],
                          sep='\t')

@@ -16,7 +16,7 @@ import napari
 # INPUT PARAMETERS
 # file info
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220526_flowFISH_topHits_screen/"
-sample_lst = ['E7', 'E8', 'E9', 'E10']
+sample_lst = ['D7', 'D8', 'D9', 'D10']
 raw_folder = '01_raw'
 seg_folder = '02_seg'
 # cell info
@@ -27,6 +27,7 @@ z_size = 500  # nm (Paul scope)
 local_size = 100
 
 for sample in sample_lst:
+    print("Start analyzing %s..." % sample)
     # LOAD Z FILE
     data_z = pd.read_csv('%s%s/%s/%s_z.txt' % (master_folder, sample[0], sample[1:], sample), na_values=['.'], sep='\t')
     data_z['centroid_nuclear'] = [dat.str_to_float(data_z['centroid_nuclear'][i]) for i in range(len(data_z))]
@@ -157,7 +158,6 @@ for sample in sample_lst:
                         weight = weight + local_DNAFISH[m][n] - int_thresh
                     vector_cum_weight.append(weight)
         if weight != 0:
-            print(weight)
             random_dot = random.choices(vector, cum_weights=vector_cum_weight, k=int(k_dots * weight / 50000))
             img_dot = np.zeros_like(local_nuclear_seg_convex)
             for m in random_dot:
@@ -362,7 +362,7 @@ for sample in sample_lst:
                                          cum_int_norm_n_half, dis_to_hub_area, dis_to_hub_int, dis_to_hub_int_norm]
 
         else:
-            plt.imsave('%s%s/%s/%s_DNAFISH_fov%s_z%s_i%s.tif' % (master_folder, sample[0], sample[1:], sample, fov,
+            plt.imsave('%s%s/%s/%s_DNAFISH_fov%s_z%s_i%s.tiff' % (master_folder, sample[0], sample[1:], sample, fov,
                                                                  z_current, label_nuclear), local_DNAFISH)
 
     data['max_area_ecDNA'] = [np.max(data['area_individual_ecDNA'][i]+[0]) for i in range(len(data))]
