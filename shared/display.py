@@ -131,19 +131,19 @@ def plot_volcano_hit(pd_p: pd.DataFrame, pd_value: pd.DataFrame, pd_gamma: pd.Da
     """
     plt.figure(figsize=(9, 6))
 
-    ctrl_std = np.std(pd_value[pd_value['sample'].isin(['WT', 'NT', 'NTC1', 'NTC2', 'E3', 'E4'])][feature])
+    ctrl_std = np.std(pd_value[pd_value['gene'].isin(['WT', 'NT', 'NTC1', 'NTC2'])][feature])
     ishit = pd_gamma[feature] / ctrl_std >= threshold
-    isgene = ~pd_gamma['sample'].isin(['WT', 'NT', 'NTC1', 'NTC2', 'E3', 'E4'])
-    isNT = pd_gamma['sample'].isin(['NT', 'NTC1', 'NTC2', 'E3', 'E4'])
-    isWT = pd_gamma['sample'].isin(['WT'])
+    isgene = ~pd_gamma['gene'].isin(['WT', 'NT', 'NTC1', 'NTC2'])
+    isNT = pd_gamma['gene'].isin(['NT', 'NTC1', 'NTC2'])
+    isWT = pd_gamma['gene'].isin(['WT'])
 
     plt.scatter(pd_value[~ishit & isgene][feature], pd_p[~ishit & isgene][feature], s=6, c='#A9A9A9',
                 label='gene non-hit')
     plt.scatter(pd_value[ishit & isgene][feature], pd_p[ishit & isgene][feature], s=6, c='#DC143C', label='gene hit')
     plt.scatter(pd_value[~ishit & isNT][feature], pd_p[~ishit & isNT][feature], s=6, c='#FFD700', label='NT non-hit')
     plt.scatter(pd_value[ishit & isNT][feature], pd_p[ishit & isNT][feature], s=6, c='#FF8C00', label='NT hit')
-    # plt.scatter(pd_value[~ishit & isWT][feature], pd_p[~ishit & isWT][feature], s=6, c='#DDA0DD', label='WT non-hit')
-    # plt.scatter(pd_value[ishit & isWT][feature], pd_p[ishit & isWT][feature], s=6, c='#8A2BE2', label='WT hit')
+    plt.scatter(pd_value[~ishit & isWT][feature], pd_p[~ishit & isWT][feature], s=6, c='#DDA0DD', label='WT non-hit')
+    plt.scatter(pd_value[ishit & isWT][feature], pd_p[ishit & isWT][feature], s=6, c='#8A2BE2', label='WT hit')
 
     ymax = np.ceil(max(pd_p[feature])) * 1.02
     xmin = min(pd_value[feature]) * 0.95
@@ -155,7 +155,7 @@ def plot_volcano_hit(pd_p: pd.DataFrame, pd_value: pd.DataFrame, pd_gamma: pd.Da
     if show_gene == 'Y':
         x_lst = pd_value[ishit & isgene][feature].tolist()
         y_lst = pd_p[ishit & isgene][feature].tolist()
-        gene_lst = pd_value[ishit & isgene]['sample'].tolist()
+        gene_lst = pd_value[ishit & isgene]['gene'].tolist()
         for i in range(len(x_lst)):
             plt.text(x_lst[i], y_lst[i], gene_lst[i], fontsize=6)
 
@@ -163,7 +163,8 @@ def plot_volcano_hit(pd_p: pd.DataFrame, pd_value: pd.DataFrame, pd_gamma: pd.Da
     plt.ylim((0, ymax))
     plt.xlabel(feature)
     plt.ylabel('-ln(p)')
-    plt.legend(loc=4, bbox_to_anchor=(0.7, 0, 0.3, 0.3))
+    # plt.legend(loc=4, bbox_to_anchor=(0.7, 0, 0.3, 0.3))
+    plt.legend()
 
     plt.savefig('%s%s_hit.pdf' % (save_path, feature))
     plt.close()

@@ -61,13 +61,17 @@ List related:
         FUNCTION: fill given length to the same maximum length with number filled_num
         SYNTAX:   list_fill_with_num(lst: list, filled_num: float)
     
-    list_addup_from_df(df: pd.DataFrame, column: str)
+    list_addup_from_df
         FUNCTION: add up all the elements from multiple lists in df[column]
         SYNTAX:   list_addup_from_df(df: pd.DataFrame, column: str)
     
-    list_fill_with_last_num(lst: list)
+    list_fill_with_last_num
         FUNCTION: fill given length to the same maximum length with last number
         SYNTAX:   list_fill_with_last_num(lst: list)
+        
+    list_invert
+        FUNCTION: invert a list
+        SYNTAX:   list_invert(lst:list)
         
 Matrix related:
     matrix_pad_with_zeros
@@ -438,5 +442,21 @@ def list_fill_with_last_num(lst: list):
             out.append(temp)
         else:
             out.append(lst[i])
+
+    return out
+
+
+def list_invert(lst: list):
+    """
+    Invert a list
+
+    :param lst: list, input list
+    :return:
+    """
+    out = []
+    lst_temp = lst.copy()
+    for i in range(len(lst)):
+        out.append(lst_temp[-1])
+        lst_temp.pop()
 
     return out
