@@ -25,6 +25,7 @@ save_folder = master_folder
 # default setting
 control = ['E3', 'E4']
 WT = ['E7', 'E8', 'E9', 'E10']
+data_gene = pd.read_csv('%sgene.txt' % master_folder, na_values=['.'], sep='\t')
 feature = ['radial_curve_DNAFISH', 'radial_curve_nuclear', 'angle_curve_DNAFISH', 'angle_curve_nuclear',
            'area_individual_ecDNA', 'area_ratio_individual_ecDNA', 'mean_int_individual_ecDNA',
            'mean_int_individual_ecDNA_norm', 'total_int_individual_ecDNA', 'total_int_individual_ecDNA_norm',
@@ -32,7 +33,7 @@ feature = ['radial_curve_DNAFISH', 'radial_curve_nuclear', 'angle_curve_DNAFISH'
            'percentage_int_curve_ecDNA_norm', 'cum_area_ind_ecDNA', 'cum_area_ind_ecDNA_filled',
            'cum_area_ratio_ind_ecDNA', 'cum_area_ratio_ind_ecDNA_filled', 'cum_int_ind_ecDNA',
            'cum_int_ind_ecDNA_filled', 'cum_int_ind_ecDNA_norm', 'cum_int_ind_ecDNA_norm_filled',
-           'angle_curve_DNAFISH_bg_correct', 'radial_curve_DNAFISH_bg_correct']
+           'angle_curve_DNAFISH_bg_correct', 'radial_curve_DNAFISH_bg_correct', 'g']
 single_feature_lst = ['z_ratio', 'limit', 'bg_int', 'area_nuclear', 'mean_int_nuclear', 'total_int_nuclear',
                       'mean_int_IF', 'total_int_IF', 'n_ecDNA', 'mean_int_DNAFISH', 'mean_int_DNAFISH_norm',
                       'total_int_DNAFISH', 'total_int_DNAFISH_norm', 'mean_int_ecDNA', 'mean_int_ecDNA_norm',
@@ -40,10 +41,13 @@ single_feature_lst = ['z_ratio', 'limit', 'bg_int', 'area_nuclear', 'mean_int_nu
                       'max_area_ecDNA', 'max_area_ratio_ecDNA', 'radial_center', 'radial_edge',
                       'percentage_area_n_half', 'percentage_area_ratio_n_half', 'percentage_int_n_half',
                       'percentage_int_norm_n_half', 'cum_area_n_half', 'cum_area_ratio_n_half', 'cum_int_n_half',
-                      'cum_int_norm_n_half', 'dis_to_hub_area', 'dis_to_hub_int', 'dis_to_hub_int_norm']
+                      'cum_int_norm_n_half', 'dis_to_hub_area', 'dis_to_hub_int', 'dis_to_hub_int_norm',
+                      'g_value', 'angle_value']
 
 multi_feature_lst = ['mean_int_ind_ecDNA', 'mean_int_ind_ecDNA_norm', 'total_int_ind_ecDNA', 'total_int_ind_ecDNA_norm',
                      'area_ind_ecDNA', 'area_ratio_ind_ecDNA']
+
+data = pd.DataFrame()
 
 data_WT = pd.DataFrame()
 for i in range(len(WT)):
@@ -51,6 +55,8 @@ for i in range(len(WT)):
                             sep='\t')
     data_WT = pd.concat([data_WT, data_temp], axis=0, ignore_index=True)
 data_WT['sample'] = ['WT'] * len(data_WT)
+data_WT['gene'] = ['WT'] * len(data_WT)
+data = pd.concat([data, data_WT], axis=0, ignore_index=True)
 for f in feature:
     data_WT[f] = [dat.str_to_float(data_WT[f][i]) for i in range(len(data_WT))]
 
@@ -69,7 +75,7 @@ data_m_WT = pd.DataFrame({'area_ind_ecDNA': data_WT_area_ind_ecDNA,
                           'total_int_ind_ecDNA_norm': data_WT_total_int_ind_ecDNA_norm,
                           'sample': ['WT'] * len(data_WT_area_ind_ecDNA)})
 
-column_lst = ['sample', 'n_s', 'n_m'] + single_feature_lst + multi_feature_lst
+column_lst = ['sample', 'n_s', 'n_m'] + single_feature_lst + multi_feature_lst + ['gene']
 
 data_mean = pd.DataFrame(columns=column_lst)
 data_p_max = pd.DataFrame(columns=column_lst)
@@ -86,9 +92,12 @@ for f in multi_feature_lst:
 
 for sample in sample_lst:
     print("Analyzing sample %s..." % sample)
+    gene = data_gene[data_gene['sample'] == sample]['gene'].tolist()[0]
     data_sample = pd.read_csv('%s%s/%s/%s.txt' % (master_folder, sample[0], sample[1:], sample), na_values=['.'],
                               sep='\t')
     data_sample['sample'] = [sample] * len(data_sample)
+    data_sample['gene'] = [gene] * len(data_sample)
+    data = pd.concat([data, data_sample], axis=0, ignore_index=True)
 
     for f in feature:
         data_sample[f] = [dat.str_to_float(data_sample[f][i]) for i in range(len(data_sample))]
@@ -145,17 +154,18 @@ for sample in sample_lst:
     n_s = len(data_sample)
     n_m = len(data_m_sample)
 
-    data_mean.loc[len(data_mean.index)] = [sample, n_s, n_m] + single_feature_mean + multi_feature_mean
-    data_p_max.loc[len(data_p_max.index)] = [sample, n_s, n_m] + single_feature_max_p + multi_feature_max_p
-    data_p.loc[len(data_p.index)] = [sample, n_s, n_m] + single_feature_p_100 + multi_feature_p_250
-    data_gamma.loc[len(data_gamma.index)] = [sample, n_s, n_m] + single_feature_gamma + multi_feature_gamma
+    data_mean.loc[len(data_mean.index)] = [sample, n_s, n_m] + single_feature_mean + multi_feature_mean + [gene]
+    data_p_max.loc[len(data_p_max.index)] = [sample, n_s, n_m] + single_feature_max_p + multi_feature_max_p + [gene]
+    data_p.loc[len(data_p.index)] = [sample, n_s, n_m] + single_feature_p_100 + multi_feature_p_250 + [gene]
+    data_gamma.loc[len(data_gamma.index)] = [sample, n_s, n_m] + single_feature_gamma + multi_feature_gamma + [gene]
 
 data_mean.loc[len(data_mean.index)] = ['WT', len(data_WT), len(data_m_WT)] + single_feature_WT_mean + \
-                                      multi_feature_WT_mean
+                                      multi_feature_WT_mean + ['WT']
 
 data_mean.to_csv('%ssummary_mean.txt' % save_folder, index=False, sep='\t')
 data_p_max.to_csv('%ssummary_p_max.txt' % save_folder, index=False, sep='\t')
 data_p.to_csv('%ssummary_p.txt' % save_folder, index=False, sep='\t')
 data_gamma.to_csv('%ssummary_gamma.txt' % save_folder, index=False, sep='\t')
+data.to_csv('%ssummary.txt' % save_folder, index=False, sep='\t')
 
 print("DONE!")

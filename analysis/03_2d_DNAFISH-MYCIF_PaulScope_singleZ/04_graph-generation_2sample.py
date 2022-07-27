@@ -34,7 +34,7 @@ feature = ['radial_curve_DNAFISH', 'radial_curve_nuclear', 'angle_curve_DNAFISH'
            'percentage_int_curve_ecDNA_norm', 'cum_area_ind_ecDNA', 'cum_area_ind_ecDNA_filled',
            'cum_area_ratio_ind_ecDNA', 'cum_area_ratio_ind_ecDNA_filled', 'cum_int_ind_ecDNA',
            'cum_int_ind_ecDNA_filled', 'cum_int_ind_ecDNA_norm', 'cum_int_ind_ecDNA_norm_filled',
-           'angle_curve_DNAFISH_bg_correct', 'radial_curve_DNAFISH_bg_correct']
+           'angle_curve_DNAFISH_bg_correct', 'radial_curve_DNAFISH_bg_correct', 'g']
 
 # LOAD FILE
 data_sample = pd.read_csv('%s%s/%s/%s.txt' % (master_folder, sample[0], sample[1:], sample), na_values=['.'], sep='\t')
@@ -153,7 +153,7 @@ plt.close()
 # single value feature
 print("Plotting single value feature...")
 feature = ['z_ratio', 'limit', 'area_nuclear', 'mean_int_DNAFISH', 'mean_int_DNAFISH_norm', 'mean_int_nuclear',
-           'total_int_DNAFISH', 'total_int_DNAFISH_norm',
+           'total_int_DNAFISH', 'total_int_DNAFISH_norm', 'g_value', 'angle_value',
            'total_int_nuclear', 'radial_center', 'radial_edge', 'total_area_ecDNA', 'area_ratio_ecDNA',
            'mean_int_ecDNA', 'mean_int_ecDNA_norm', 'total_int_ecDNA', 'total_int_ecDNA_norm', 'area_ratio_ecDNA',
            'max_area_ecDNA', 'max_area_ratio_ecDNA', 'n_ecDNA', 'percentage_area_n_half',
@@ -254,6 +254,66 @@ for feature_x in feature_x_lst:
 
         plt.savefig('%scomparison_of_%s_vs_%s.pdf' % (save_folder, feature_x, feature_y))
         plt.close()
+
+# auto correlation curve
+print("Plotting auto correlation curve...")
+feature = ['g']
+for f in feature:
+    x = np.arange(0, 100, 1)
+    x_label = 'r'
+
+    number_nuclear1 = len(data_sample)
+    number_nuclear2 = len(data_WT)
+
+    mean_curve1, ci_lower1, ci_higher1 = dat.mean_list(data_sample[f].tolist())
+    mean_curve2, ci_lower2, ci_higher2 = dat.mean_list(data_WT[f].tolist())
+
+    plt.subplots(figsize=(6, 4))
+    for i in range(len(data_sample)):
+        plt.plot(x, data_sample[f][i], alpha=0.05, color=[line_colors[0][j] + 0.05 for j in range(len(line_colors[0]))])
+    for i in range(len(data_WT)):
+        plt.plot(x, data_WT[f][i], alpha=0.05, color=[line_colors[1][j]+0.05 for j in range(len(line_colors[1]))])
+    plt.plot(x, mean_curve1, color=line_colors[0], label='%s, n=%s' % (sample, number_nuclear1))
+    plt.plot(x, mean_curve2, color=line_colors[1], label='%s, n=%s' % ('WT', number_nuclear2))
+    plt.plot(x, ci_lower1, color=line_colors[0], linestyle='--', linewidth=0.5)
+    plt.plot(x, ci_higher1, color=line_colors[0], linestyle='--', linewidth=0.5)
+    plt.plot(x, ci_lower2, color=line_colors[1], linestyle='--', linewidth=0.5)
+    plt.plot(x, ci_higher2, color=line_colors[1], linestyle='--', linewidth=0.5)
+    plt.xlabel(x_label)
+    plt.ylabel(f)
+    plt.legend()
+    plt.savefig('%s/%s_%s.pdf' % (save_folder, f, sample))
+    plt.close()
+
+# radial curve
+print("Plotting radial curve...")
+feature = ['radial_curve_DNAFISH_bg_correct']
+for f in feature:
+    x = np.arange(0, 1, 0.01)
+    x_label = 'relative r'
+
+    number_nuclear1 = len(data_sample)
+    number_nuclear2 = len(data_WT)
+
+    mean_curve1, ci_lower1, ci_higher1 = dat.mean_list(data_sample[f].tolist())
+    mean_curve2, ci_lower2, ci_higher2 = dat.mean_list(data_WT[f].tolist())
+
+    plt.subplots(figsize=(6, 4))
+    for i in range(len(data_sample)):
+        plt.plot(x, data_sample[f][i], alpha=0.05, color=[line_colors[0][j] + 0.05 for j in range(len(line_colors[0]))])
+    for i in range(len(data_WT)):
+        plt.plot(x, data_WT[f][i], alpha=0.05, color=[line_colors[1][j]+0.05 for j in range(len(line_colors[1]))])
+    plt.plot(x, mean_curve1, color=line_colors[0], label='%s, n=%s' % (sample, number_nuclear1))
+    plt.plot(x, mean_curve2, color=line_colors[1], label='%s, n=%s' % ('WT', number_nuclear2))
+    plt.plot(x, ci_lower1, color=line_colors[0], linestyle='--', linewidth=0.5)
+    plt.plot(x, ci_higher1, color=line_colors[0], linestyle='--', linewidth=0.5)
+    plt.plot(x, ci_lower2, color=line_colors[1], linestyle='--', linewidth=0.5)
+    plt.plot(x, ci_higher2, color=line_colors[1], linestyle='--', linewidth=0.5)
+    plt.xlabel(x_label)
+    plt.ylabel(f)
+    plt.legend()
+    plt.savefig('%s/%s_%s.pdf' % (save_folder, f, sample))
+    plt.close()
 
 # angle curve
 print("Plotting angle curve...")

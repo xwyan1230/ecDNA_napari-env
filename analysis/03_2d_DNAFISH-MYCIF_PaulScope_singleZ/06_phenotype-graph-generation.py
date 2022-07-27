@@ -9,14 +9,15 @@ features = ['area_nuclear', 'mean_int_nuclear', 'total_int_nuclear', 'mean_int_I
             'area_ratio_ecDNA', 'max_area_ratio_ecDNA', 'radial_center', 'radial_edge', 'percentage_area_n_half',
             'percentage_area_ratio_n_half', 'percentage_int_n_half', 'percentage_int_norm_n_half', 'cum_area_n_half',
             'cum_area_ratio_n_half', 'cum_int_n_half', 'cum_int_norm_n_half', 'dis_to_hub_area', 'dis_to_hub_int',
-            'dis_to_hub_int_norm', 'mean_int_ind_ecDNA_norm', 'total_int_ind_ecDNA_norm', 'area_ratio_ind_ecDNA']
+            'dis_to_hub_int_norm', 'mean_int_ind_ecDNA_norm', 'total_int_ind_ecDNA_norm', 'area_ratio_ind_ecDNA',
+            'g_value', 'angle_value']
 save_folder = "%svolcano/" % master_folder
 if not os.path.exists(save_folder):
     os.makedirs(save_folder)
 
-data_p = pd.read_csv(("%ssummary_p.txt" % master_folder), na_values=['.'], sep='\t')
-data_mean = pd.read_csv(("%ssummary_mean.txt" % master_folder), na_values=['.'], sep='\t')
-data_gamma = pd.read_csv(("%ssummary_gamma.txt" % master_folder), na_values=['.'], sep='\t')
+data_p = pd.read_csv(("%ssummary/summary_p.txt" % master_folder), na_values=['.'], sep='\t')
+data_mean = pd.read_csv(("%ssummary/summary_mean.txt" % master_folder), na_values=['.'], sep='\t')
+data_gamma = pd.read_csv(("%ssummary/summary_gamma.txt" % master_folder), na_values=['.'], sep='\t')
 
 centers = []
 for i in range(len(features)):
