@@ -3,8 +3,8 @@ import tifffile as tif
 
 # INPUT PARAMETERS
 # file info
-master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220325_Natasha_THZ1/"
-sample = '72hrJQ1'
+master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220708_Natasha_ColoDM_interphase/"
+sample = 'DMSO1'
 raw_folder = '00_raw'
 save_folder = '01_raw'
 total_fov = 1

@@ -8,6 +8,7 @@ import shared.dataframe as dat
 import random
 import shared.segmentation as seg
 import tifffile as tif
+import shared.math as mat
 import matplotlib.pyplot as plt
 import napari
 
@@ -23,6 +24,7 @@ cell_avg_size = 10  # um (Colo)
 nuclear_size_range = [0.6, 1.5]  # used to filter nucleus
 z_size = 500  # nm (Paul scope)
 local_size = 100
+rmax = 100
 
 # LOAD Z FILE
 data_z = pd.read_csv('%s%s/%s_z.txt' % (master_folder, sample, sample), na_values=['.'], sep='\t')
@@ -45,6 +47,8 @@ data = pd.DataFrame(columns=['nuclear',
                              'total_int_DNAFISH',
                              'total_int_DNAFISH_norm',
                              'total_int_nuclear',
+                             'g',
+                             'g_value',
                              'radial_curve_DNAFISH',
                              'radial_curve_DNAFISH_bg_correct',
                              'radial_curve_nuclear',
@@ -53,6 +57,7 @@ data = pd.DataFrame(columns=['nuclear',
                              'angle_curve_DNAFISH',
                              'angle_curve_DNAFISH_bg_correct',
                              'angle_curve_nuclear',
+                             'angle_value',
                              'total_area_ecDNA',
                              'area_ratio_ecDNA',
                              'total_int_ecDNA',
@@ -207,6 +212,11 @@ for i in range(len(data_z)):
         cum_int_ind_ecDNA_norm = dat.list_sum(total_int_ind_ecDNA_norm)
         cum_int_norm_n_half = dat.find_pos(cum_int_ind_ecDNA_norm[-1]/2, cum_int_ind_ecDNA_norm)
 
+        # auto-correlation
+        print("Start auto correlation analysis...")
+        _, r, g, dg = mat.auto_correlation(local_DNAFISH_bg_correct, local_nuclear_seg_convex, rmax)
+        g_value = (g[1] + g[2] + g[3] + g[4] + g[5]) * 0.2
+
         # radial distribution
         local_nuclear_centroid = local_nuclear_props[0].centroid
         _, local_edge_distance_map = medial_axis(local_nuclear_seg_convex, return_distance=True)
@@ -257,6 +267,7 @@ for i in range(len(data_z)):
             dat.list_peak_center_with_control(angle_distribution_DNAFISH_smooth, angle_distribution_nuclear_smooth)
         angle_distribution_DNAFISH_bg_correct_smooth_centered = \
             dat.list_peak_center(angle_distribution_DNAFISH_bg_correct_smooth)
+        angle_value = angle_distribution_DNAFISH_bg_correct_smooth_centered[179]
 
         data.loc[len(data.index)] = [i, data_z['FOV'][i], data_z['z'][i], data_z['z_min'][i], data_z['z_max'][i],
                                      data_z['z_ratio'][i], data_z['label_nuclear'][i],
@@ -264,12 +275,12 @@ for i in range(len(data_z)):
                                      mean_int_bg, mean_int_DNAFISH,
                                      mean_int_DNAFISH_norm,
                                      mean_int_nuclear, total_int_DNAFISH, total_int_DNAFISH_norm,
-                                     total_int_nuclear, radial_distribution_relative_r_DNAFISH_smooth,
+                                     total_int_nuclear, g, g_value, radial_distribution_relative_r_DNAFISH_smooth,
                                      radial_distribution_relative_r_DNAFISH_bg_correct_smooth,
                                      radial_distribution_relative_r_nuclear_smooth, radial_subtract_center,
                                      radial_subtract_edge, angle_distribution_DNAFISH_smooth_centered,
                                      angle_distribution_DNAFISH_bg_correct_smooth_centered,
-                                     angle_distribution_nuclear_smooth_centered, total_area_ecDNA,
+                                     angle_distribution_nuclear_smooth_centered, angle_value, total_area_ecDNA,
                                      total_area_ratio_ecDNA,
                                      total_int_ecDNA,
                                      total_int_ecDNA_norm,
