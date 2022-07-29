@@ -16,12 +16,12 @@ import napari
 # INPUT PARAMETERS
 # file info
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220526_flowFISH_topHits_screen/"
-sample_row = 'E'
+sample_row = 'B'
 sample_num = '3'
-sample = 'E3'
+sample = 'B3'
 raw_folder = '01_raw'
 seg_folder = '02_seg'
-save_folder = '05_DNAFISH_total'
+save_folder = '05_DNAFISH_tight'
 total_fov = 5
 # cell info
 pixel_size = 102  # nm (sp8 confocal 3144x3144:58.7, Paul scope 2048x2048:102)
@@ -31,7 +31,7 @@ z_size = 500  # nm (Paul scope)
 local_size = 100
 
 # LOAD Z FILE
-data_z = pd.read_csv('%s%s/%s/%s_z.txt' % (master_folder, sample_row, sample_num, sample), na_values=['.'], sep='\t')
+data_z = pd.read_csv('%s%s/%s/%s_z_tight.txt' % (master_folder, sample_row, sample_num, sample), na_values=['.'], sep='\t')
 data_z['centroid_nuclear'] = [dat.str_to_float(data_z['centroid_nuclear'][i]) for i in range(len(data_z))]
 
 # IMAGING ANALYSIS

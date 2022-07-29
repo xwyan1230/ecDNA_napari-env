@@ -79,6 +79,8 @@ def img_to_int(img: np.array):
     out = img
     if len(np.shape(img)) == 3:
         out = img[:, :, 0] + img[:, :, 1] + img[:, :, 2]
+    elif len(np.shape(img)) == 4:
+        out = img[:, :, :, 0] + img[:, :, :, 1] + img[:, :, :, 2]
     return out
 
 

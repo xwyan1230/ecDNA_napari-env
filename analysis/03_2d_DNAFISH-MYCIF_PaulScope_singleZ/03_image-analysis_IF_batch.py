@@ -18,10 +18,11 @@ import napari
 # INPUT PARAMETERS
 # file info
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220526_flowFISH_topHits_screen/"
-sample_lst = ['B7', 'B8', 'B9', 'B10']
+sample_lst = ['C4']
+version = 4
 raw_folder = '01_raw'
 seg_folder = '02_seg'
-save_folder = '03_img'
+save_folder = '03_img_v%s' % version
 # cell info
 pixel_size = 102  # nm (sp8 confocal 3144x3144:58.7, Paul scope 2048x2048:102)
 cell_avg_size = 10  # um (Colo)
@@ -203,6 +204,8 @@ for sample in sample_lst:
                        local_nuclear_seg_convex)
             plt.imsave('%s%s_DNAFISH_woBg_fov%s_z%s_i%s.tiff' % (save_path, sample, fov, z_current, label_nuclear),
                        local_DNAFISH_bg_correct)
+            plt.imsave('%s%s_DNAFISH_ecDNAseg_fov%s_z%s_i%s.tiff' % (save_path, sample, fov, z_current, label_nuclear),
+                       ecDNA_seg)
 
             # basic measurements
             local_nuclear_props = regionprops(label(local_nuclear_seg_convex), local_nuclear)

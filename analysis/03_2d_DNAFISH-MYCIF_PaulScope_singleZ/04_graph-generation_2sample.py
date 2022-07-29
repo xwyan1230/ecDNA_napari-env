@@ -15,8 +15,8 @@ import os
 # INPUT PARAMETERS
 # file info
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220526_flowFISH_topHits_screen/"
-sample = 'B10'
-save_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220526_flowFISH_topHits_screen/figures/%s/" % sample
+sample = 'E9'
+save_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220526_flowFISH_topHits_screen/v4_figures/%s/" % sample
 if not os.path.exists(save_folder):
     os.makedirs(save_folder)
 
@@ -229,8 +229,8 @@ for f in feature:
 
 # scatter
 print("Plotting scatter images...")
-feature_x_lst = ['mean_int_ecDNA_norm']
-feature_y_lst = ['mean_int_IF']
+feature_x_lst = ['mean_int_ecDNA_norm', 'total_int_ecDNA_norm', 'total_area_ecDNA', 'total_int_DNAFISH_norm']
+feature_y_lst = ['mean_int_IF', 'area_ratio_ecDNA', 'total_area_ecDNA', 'total_int_IF']
 
 sns.set_palette(sns.color_palette(line_colors))
 data_part = data[(data['sample'] == sample) | (data['sample'] == 'WT')].copy()
@@ -249,8 +249,8 @@ for feature_x in feature_x_lst:
         x = np.arange(0, 5000, 250)
         y_sample = int_fit_a_sample * x
         y_WT = int_fit_a_WT * x
-        ax1.ax_joint.plot(x, y_sample, linewidth=2, color=line_colors[0], linestyle='--')
-        ax1.ax_joint.plot(x, y_WT, linewidth=2, color=line_colors[1], linestyle='--')
+        # ax1.ax_joint.plot(x, y_sample, linewidth=2, color=line_colors[0], linestyle='--')
+        # ax1.ax_joint.plot(x, y_WT, linewidth=2, color=line_colors[1], linestyle='--')
 
         plt.savefig('%scomparison_of_%s_vs_%s.pdf' % (save_folder, feature_x, feature_y))
         plt.close()
@@ -259,7 +259,7 @@ for feature_x in feature_x_lst:
 print("Plotting auto correlation curve...")
 feature = ['g']
 for f in feature:
-    x = np.arange(0, 100, 1)
+    x = np.arange(0, 101, 1)
     x_label = 'r'
 
     number_nuclear1 = len(data_sample)
@@ -289,7 +289,7 @@ for f in feature:
 print("Plotting radial curve...")
 feature = ['radial_curve_DNAFISH_bg_correct']
 for f in feature:
-    x = np.arange(0, 1, 0.01)
+    x = np.arange(0.01, 0.99, 0.01)
     x_label = 'relative r'
 
     number_nuclear1 = len(data_sample)

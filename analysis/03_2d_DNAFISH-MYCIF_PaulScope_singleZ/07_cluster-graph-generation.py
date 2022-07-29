@@ -13,20 +13,24 @@ import numpy as np
 import os
 
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220526_flowFISH_topHits_screen/"
-features_heatmap = ['area_nuclear', 'mean_int_nuclear', 'total_int_nuclear', 'mean_int_IF', 'total_int_IF', 'n_ecDNA',
+"""features_heatmap = ['area_nuclear', 'mean_int_nuclear', 'total_int_nuclear', 'mean_int_IF', 'total_int_IF', 'n_ecDNA',
                     'mean_int_DNAFISH_norm', 'total_int_DNAFISH_norm', 'mean_int_ecDNA_norm', 'total_int_ecDNA_norm',
                     'mean_int_ind_ecDNA_norm', 'total_int_ind_ecDNA_norm', 'area_ratio_ind_ecDNA',
                     'area_ratio_ecDNA', 'max_area_ratio_ecDNA', 'radial_center', 'cum_area_ratio_n_half',
-                    'cum_int_norm_n_half', 'dis_to_hub_area', 'dis_to_hub_int_norm', 'g_value', 'angle_value', ]
+                    'cum_int_norm_n_half', 'dis_to_hub_area', 'dis_to_hub_int_norm', 'g_value', 'angle_value', ]"""
 features = ['area_nuclear', 'mean_int_DNAFISH_norm', 'mean_int_IF', 'radial_center', 'area_ratio_ecDNA',
             'mean_int_ecDNA_norm', 'max_area_ratio_ecDNA', 'n_ecDNA', 'cum_area_ratio_n_half',
             'cum_int_norm_n_half', 'dis_to_hub_int_norm', 'g_value', 'angle_value']
-save_folder = "%scluster/" % master_folder
+
+features_heatmap = ['mean_int_IF', 'total_int_IF', 'mean_int_ecDNA_norm', 'area_ratio_ecDNA', 'radial_center',
+                    'radial_edge', 'n_ecDNA', 'cum_area_ratio_n_half', 'dis_to_hub_area']
+
+save_folder = "%sv5_cluster_short/" % master_folder
 if not os.path.exists(save_folder):
     os.makedirs(save_folder)
 
-data = pd.read_csv(("%ssummary/summary.txt" % master_folder), na_values=['.'], sep='\t')
-data_mean = pd.read_csv(("%ssummary/summary_mean.txt" % master_folder), na_values=['.'], sep='\t')
+data = pd.read_csv(("%sv5_summary/summary.txt" % master_folder), na_values=['.'], sep='\t')
+data_mean = pd.read_csv(("%sv5_summary/summary_mean.txt" % master_folder), na_values=['.'], sep='\t')
 data_gene = pd.read_csv("%sgene.txt" % master_folder, na_values=['.'], sep='\t')
 genelist = list(set(data_gene['gene']))
 
