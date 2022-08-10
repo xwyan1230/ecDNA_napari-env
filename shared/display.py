@@ -131,10 +131,10 @@ def plot_volcano_hit(pd_p: pd.DataFrame, pd_value: pd.DataFrame, pd_gamma: pd.Da
     """
     plt.figure(figsize=(9, 6))
 
-    ctrl_std = np.std(pd_value[pd_value['gene'].isin(['WT', 'NT', 'NTC1', 'NTC2'])][feature])
+    ctrl_std = np.std(pd_value[pd_value['gene'].isin(['WT', 'NT'])][feature])
     ishit = pd_gamma[feature] / ctrl_std >= threshold
-    isgene = ~pd_gamma['gene'].isin(['WT', 'NT', 'NTC1', 'NTC2'])
-    isNT = pd_gamma['gene'].isin(['NT', 'NTC1', 'NTC2'])
+    isgene = ~pd_gamma['gene'].isin(['WT', 'NT'])
+    isNT = pd_gamma['gene'].isin(['NT'])
     isWT = pd_gamma['gene'].isin(['WT'])
 
     plt.scatter(pd_value[~ishit & isgene][feature], pd_p[~ishit & isgene][feature], s=6, c='#A9A9A9',

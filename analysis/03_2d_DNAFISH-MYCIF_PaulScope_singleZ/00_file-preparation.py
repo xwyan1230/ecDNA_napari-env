@@ -3,9 +3,9 @@ import shutil
 
 # INPUT PARAMETERS
 # file info
-master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220526_flowFISH_topHits_screen/"
-sample_row_lst = ['B', 'C', 'D']
-sample_col_lst = ['3', '4', '5', '6', '7', '8', '9', '10']
+master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220726_BRDfamily_screen/"
+sample_row_lst = ['B', 'C', 'D', 'E', 'F', 'G']
+sample_col_lst = ['2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
 
 for sample_row in sample_row_lst:
     for sample_col in sample_col_lst:

@@ -11,11 +11,11 @@ import napari
 
 # INPUT PARAMETERS
 # file info
-master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220526_flowFISH_topHits_screen/"
-sample_lst = ['D7', 'D8', 'D9', 'D10']
+master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220726_BRDfamily_screen/"
+sample_lst = ['B11', 'C11', 'D11', 'E11', 'F11', 'G11']
 raw_folder = '01_raw'
 save_folder = '02_seg'
-total_fov = 5
+total_fov = 15
 for sample in sample_lst:
     save_path = "%s%s/%s/%s/" % (master_folder, sample[0], sample[1:], save_folder)
     if not os.path.exists(save_path):

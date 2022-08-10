@@ -435,13 +435,14 @@ def list_fill_with_last_num(lst: list):
     """
     out = []
     len_lst = [len(lst[i]) for i in range(len(lst))]
-    max_len = max(len_lst)
-    for i in range(len(lst)):
-        if len(lst[i]) < max_len:
-            temp = lst[i] + [lst[i][-1]]*(max_len-len(lst[i]))
-            out.append(temp)
-        else:
-            out.append(lst[i])
+    if len(len_lst) != 0:
+        max_len = max(len_lst)
+        for i in range(len(lst)):
+            if len(lst[i]) < max_len:
+                temp = lst[i] + [lst[i][-1]]*(max_len-len(lst[i]))
+                out.append(temp)
+            else:
+                out.append(lst[i])
 
     return out
 

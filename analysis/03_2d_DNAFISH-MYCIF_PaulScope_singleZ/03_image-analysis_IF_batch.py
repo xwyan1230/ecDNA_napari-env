@@ -17,9 +17,9 @@ import napari
 
 # INPUT PARAMETERS
 # file info
-master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220526_flowFISH_topHits_screen/"
-sample_lst = ['C4']
-version = 4
+master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220726_BRDfamily_screen/"
+sample_lst = ['F11', 'G9', 'G10', 'G11']
+version = 1
 raw_folder = '01_raw'
 seg_folder = '02_seg'
 save_folder = '03_img_v%s' % version
@@ -102,7 +102,10 @@ for sample in sample_lst:
                                  'cum_int_norm_n_half',
                                  'dis_to_hub_area',
                                  'dis_to_hub_int',
-                                 'dis_to_hub_int_norm'])
+                                 'dis_to_hub_int_norm',
+                                 'relative_r_area',
+                                 'relative_r_int',
+                                 'relative_r_int_norm'])
 
     # IMAGING ANALYSIS
     for i in range(len(data_z)):
@@ -339,6 +342,41 @@ for sample in sample_lst:
             radial_subtract_center = np.mean(radial_subtract[0:40])
             radial_subtract_edge = np.mean(radial_subtract[40:80])
 
+            # relative_r
+            relative_r_area = 0
+            relative_r_int = 0
+            relative_r_int_norm = 0
+            if n_ecDNA == 0:
+                relative_r_area = -1
+                relative_r_int = -1
+                relative_r_int_norm = -1
+            elif n_ecDNA >= 1:
+                ind_ecDNA = pd.DataFrame({'area': area_ind_ecDNA, 'total_int': total_int_ind_ecDNA,
+                                          'total_int_norm': total_int_ind_ecDNA_norm, 'centroid': centroid_ind_ecDNA})
+
+                ind_ecDNA_sort_area = ind_ecDNA.copy().sort_values(by='area', axis=0, ascending=False, inplace=False,
+                                                                   ignore_index=True)
+                ind_ecDNA_sort_area['dis'] = \
+                    [local_relative_r_map[int(ind_ecDNA_sort_area['centroid'][i][0])][int(ind_ecDNA_sort_area['centroid'][i][1])]
+                     for i in range(len(ind_ecDNA_sort_area))]
+
+                for ind in range(n_ecDNA):
+                    relative_r_area = relative_r_area + ind_ecDNA_sort_area['area'][ind] / total_area_ecDNA * \
+                                      ind_ecDNA_sort_area['dis'][ind]
+
+                ind_ecDNA_sort_int = ind_ecDNA.copy().sort_values(by='total_int', axis=0, ascending=False,
+                                                                  inplace=False, ignore_index=True)
+                ind_ecDNA_sort_int['dis'] = \
+                    [local_relative_r_map[int(ind_ecDNA_sort_int['centroid'][i][0])][int(ind_ecDNA_sort_int['centroid'][i][1])]
+                     for i in range(len(ind_ecDNA_sort_int))]
+
+                for ind in range(n_ecDNA):
+                    relative_r_int = relative_r_int + ind_ecDNA_sort_int['total_int'][ind] / total_int_ecDNA * \
+                                     ind_ecDNA_sort_int['dis'][ind]
+                    relative_r_int_norm = \
+                        relative_r_int_norm + ind_ecDNA_sort_int['total_int_norm'][ind] / total_int_ecDNA_norm * \
+                        ind_ecDNA_sort_int['dis'][ind]
+
             # angle distribution
             local_angle_map = img.angle_map_from_point(local_nuclear_seg_convex, local_nuclear_centroid)
             angle_distribution_DNAFISH = img.radial_distribution_from_distance_map(local_nuclear_seg_convex,
@@ -388,7 +426,8 @@ for sample in sample_lst:
                                          cum_area_ind_ecDNA, cum_area_n_half, cum_area_ratio_ind_ecDNA,
                                          cum_area_ratio_n_half, cum_int_ind_ecDNA, cum_int_n_half,
                                          cum_int_ind_ecDNA_norm,
-                                         cum_int_norm_n_half, dis_to_hub_area, dis_to_hub_int, dis_to_hub_int_norm]
+                                         cum_int_norm_n_half, dis_to_hub_area, dis_to_hub_int, dis_to_hub_int_norm,
+                                         relative_r_area, relative_r_int, relative_r_int_norm]
 
         else:
             plt.imsave('%s%s/%s/%s_DNAFISH_fov%s_z%s_i%s.tiff' % (master_folder, sample[0], sample[1:], sample, fov,
@@ -397,12 +436,11 @@ for sample in sample_lst:
     data['max_area_ecDNA'] = [np.max(data['area_individual_ecDNA'][i]+[0]) for i in range(len(data))]
     data['max_area_ratio_ecDNA'] = data['max_area_ecDNA']/data['area_nuclear']
     data['n_ecDNA'] = [len(data['area_individual_ecDNA'][i]) for i in range(len(data))]
-    max_n_ecDNA = max(data['n_ecDNA'])
     data['cum_area_ind_ecDNA_filled'] = dat.list_fill_with_last_num(data['cum_area_ind_ecDNA'])
     data['cum_area_ratio_ind_ecDNA_filled'] = dat.list_fill_with_last_num(data['cum_area_ratio_ind_ecDNA'])
     data['cum_int_ind_ecDNA_filled'] = dat.list_fill_with_last_num(data['cum_int_ind_ecDNA'])
     data['cum_int_ind_ecDNA_norm_filled'] = dat.list_fill_with_last_num(data['cum_int_ind_ecDNA_norm'])
 
-    data.to_csv('%s%s/%s/%s.txt' % (master_folder, sample[0], sample[1:], sample), index=False, sep='\t')
+    data.to_csv('%s%s/%s/%s_v%s.txt' % (master_folder, sample[0], sample[1:], sample, version), index=False, sep='\t')
 
 print("DONE!")

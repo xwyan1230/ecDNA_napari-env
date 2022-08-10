@@ -12,9 +12,9 @@ import napari
 
 # INPUT PARAMETERS
 # file info
-master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220708_Natasha_ColoDM_interphase/"
-sample = '72hrTHZ1'
-master_path = '%s220708_COLODM_interphase_%s/' % (master_folder, sample)
+master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220722_Natasha_ColoDM_Jun/"
+sample = 'ARV825'
+master_path = '%s%s/' % (master_folder, sample)
 raw_folder = 'TileScan 1'
 save_folder = '02_seg'
 save_path = '%s%s/' % (master_path, save_folder)
@@ -43,13 +43,16 @@ data = pd.DataFrame(columns=['FOV',
 for f in range(total_fov):
     fov = f + start_fov
     print("Start nuclear segmentation FOV %s/%s" % (fov, total_fov))
-    file_prefix = "%s_Position %s" % (raw_folder, fov)
+    file_prefix = "%s_Position %s_RAW" % (raw_folder, fov)
     # LOAD IMAGE
-    im_z_stack_nuclear = img.img_to_int(skio.imread("%s%s/%s_ch00.tif" % (master_path, raw_folder, file_prefix),
+    """im_z_stack_nuclear = img.img_to_int(skio.imread("%s%s/%s_ch00.tif" % (master_path, raw_folder, file_prefix),
                                                     plugin="tifffile"))
 
     im_z_stack_DNAFISH = img.img_to_int(skio.imread("%s%s/%s_ch01.tif" % (master_path, raw_folder, file_prefix),
-                                                    plugin="tifffile"))
+                                                    plugin="tifffile"))"""
+    im_z_stack_nuclear = skio.imread("%s%s/%s_ch00.tif" % (master_path, raw_folder, file_prefix), plugin="tifffile")
+    im_z_stack_DNAFISH = skio.imread("%s%s/%s_ch01.tif" % (master_path, raw_folder, file_prefix), plugin="tifffile")
+
     total_z = im_z_stack_nuclear.shape[0]
 
     # Perform nuclear segmentation

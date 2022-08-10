@@ -9,15 +9,20 @@ import random
 import shared.segmentation as seg
 import tifffile as tif
 import shared.math as mat
+from skimage.filters import threshold_otsu
+import shared.objects as obj
 import matplotlib.pyplot as plt
+import os
 import napari
 
 # INPUT PARAMETERS
 # file info
-master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220325_Natasha_THZ1/"
-sample = '72hr_100nMTHZ'
-raw_folder = '01_raw'
+master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220708_Natasha_ColoDM_interphase/"
+sample = '72hrTHZ1'
+master_path = '%s220708_COLODM_interphase_%s/' % (master_folder, sample)
+raw_folder = 'TileScan 1'
 seg_folder = '02_seg'
+save_folder = '03_img'
 # cell info
 pixel_size = 102  # nm (sp8 confocal 3144x3144:58.7, Paul scope 2048x2048:102)
 cell_avg_size = 10  # um (Colo)
@@ -27,7 +32,7 @@ local_size = 100
 rmax = 100
 
 # LOAD Z FILE
-data_z = pd.read_csv('%s%s/%s_z.txt' % (master_folder, sample, sample), na_values=['.'], sep='\t')
+data_z = pd.read_csv('%s%s_z.txt' % (master_path, sample), na_values=['.'], sep='\t')
 data_z['centroid_nuclear'] = [dat.str_to_float(data_z['centroid_nuclear'][i]) for i in range(len(data_z))]
 
 data = pd.DataFrame(columns=['nuclear',
@@ -85,7 +90,13 @@ data = pd.DataFrame(columns=['nuclear',
                              'cum_int_ind_ecDNA',
                              'cum_int_n_half',
                              'cum_int_ind_ecDNA_norm',
-                             'cum_int_norm_n_half'])
+                             'cum_int_norm_n_half',
+                             'dis_to_hub_area',
+                             'dis_to_hub_int',
+                             'dis_to_hub_int_norm',
+                             'relative_r_area',
+                             'relative_r_int',
+                             'relative_r_int_norm'])
 
 # IMAGING ANALYSIS
 for i in range(len(data_z)):
@@ -94,13 +105,12 @@ for i in range(len(data_z)):
     z_current = data_z['z'][i]
     label_nuclear = data_z['label_nuclear'][i]
     original_centroid_nuclear = data_z['centroid_nuclear'][i]
+    file_prefix = "%s_Position %s_RAW" % (raw_folder, fov)
 
     # load images
-    im_z_stack_nuclear = skio.imread("%s%s/%s/%s_RAW_ch00_fov%s.tif" % (master_folder, sample, raw_folder, sample, fov),
-                                     plugin="tifffile")
-    im_z_stack_DNAFISH = skio.imread("%s%s/%s/%s_RAW_ch01_fov%s.tif" % (master_folder, sample, raw_folder, sample, fov),
-                                     plugin="tifffile")
-    im_z_stack_seg_convex = skio.imread("%s%s/%s/%s_seg_fov%s.tif" % (master_folder, sample, seg_folder, sample, fov),
+    im_z_stack_nuclear = skio.imread("%s%s/%s_ch00.tif" % (master_path, raw_folder, file_prefix), plugin="tifffile")
+    im_z_stack_DNAFISH = skio.imread("%s%s/%s_ch01.tif" % (master_path, raw_folder, file_prefix), plugin="tifffile")
+    im_z_stack_seg_convex = skio.imread("%s%s/%s_seg_fov%s.tif" % (master_path, seg_folder, sample, fov),
                                         plugin="tifffile")
 
     # get images for given z
@@ -117,11 +127,23 @@ for i in range(len(data_z)):
     local_DNAFISH = local_DNAFISH[position[0]:position[1], position[2]:position[3]]
 
     # ecDNA segmentation
-    int_thresh = data_z['limit'][i]*0.9
     k_dots = 5000
     vector = []
     vector_cum_weight = []
     weight = 0
+
+    DNAFISH_seg, _ = seg.find_organelle(local_DNAFISH, 'na', extreme_val=500, bg_val=data_z['limit'][i] * 0.8,
+                                        min_size=0, max_size=500)
+    DNAFISH_seg[local_nuclear_seg_convex == 0] = 0
+
+    bg_seg_temp = local_nuclear_seg_convex.copy()
+    bg_seg_temp[DNAFISH_seg == 1] = 0
+    local_DNAFISH_bg_temp = local_DNAFISH.copy()
+    local_DNAFISH_bg_temp[local_nuclear_seg_convex == 0] = 0
+    local_DNAFISH_bg_temp[DNAFISH_seg == 1] = 0
+    bg = np.sum(local_DNAFISH_bg_temp) / np.sum(bg_seg_temp)
+
+    int_thresh = bg * 1.2
     for m in range(len(local_nuclear_seg_convex)):
         for n in range(len(local_nuclear_seg_convex[0])):
             if local_nuclear_seg_convex[m][n] == 1:
@@ -130,21 +152,20 @@ for i in range(len(data_z)):
                     weight = weight + local_DNAFISH[m][n] - int_thresh
                 vector_cum_weight.append(weight)
     if weight != 0:
-        random_dot = random.choices(vector, cum_weights=vector_cum_weight, k=k_dots)
+        random_dot = random.choices(vector, cum_weights=vector_cum_weight, k=int(k_dots * weight / 50000))
         img_dot = np.zeros_like(local_nuclear_seg_convex)
         for m in random_dot:
             img_dot[m[0]][m[1]] = img_dot[m[0]][m[1]] + 1
-        img_dot_remove_bg = dilation(img_dot)
-        img_dot_remove_bg = erosion(img_dot_remove_bg)
-        img_dot_remove_bg = erosion(img_dot_remove_bg)
-        img_dot_remove_bg = erosion(img_dot_remove_bg)
-        img_dot_remove_bg = dilation(img_dot_remove_bg)
-        img_dot_seg = img_dot_remove_bg.copy()
-        img_dot_seg[img_dot_remove_bg > 0] = 1
-        DNAFISH_seg, _ = seg.find_organelle(local_DNAFISH, 'na', extreme_val=500, bg_val=data_z['limit'][i]*0.8,
-                                            min_size=0, max_size=10000)
-        DNAFISH_seg[local_nuclear_seg_convex == 0] = 0
-        ecDNA_seg = img_dot_seg.copy()
+        img_dot_remove_bg = img_dot.copy()
+        img_dot_remove_bg[img_dot < 35] = 0
+        img_dot_remove_bg_thresh = img_dot_remove_bg > threshold_otsu(img_dot_remove_bg)
+        img_dot_remove_bg_thresh = obj.remove_small(label(img_dot_remove_bg_thresh), 5)
+        img_dot_remove_bg_thresh = erosion(img_dot_remove_bg_thresh)
+        img_dot_remove_bg_thresh = erosion(img_dot_remove_bg_thresh)
+        img_dot_remove_bg_thresh = dilation(img_dot_remove_bg_thresh)
+        img_dot_remove_bg_thresh = dilation(img_dot_remove_bg_thresh)
+
+        ecDNA_seg = img_dot_remove_bg_thresh.copy()
         ecDNA_seg[DNAFISH_seg == 1] = 1
         bg_seg = local_nuclear_seg_convex.copy()
         bg_seg[ecDNA_seg == 1] = 0
@@ -156,6 +177,21 @@ for i in range(len(data_z)):
         local_DNAFISH_bg_correct = local_DNAFISH.copy()
         local_DNAFISH_bg_correct = local_DNAFISH_bg_correct.astype(float) - mean_int_bg
         local_DNAFISH_bg_correct[local_DNAFISH_bg_correct < 0] = 0
+
+        # save local images
+        save_path = '%s%s/' % (master_path, save_folder)
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
+        plt.imsave('%s%s_DNAFISH_fov%s_z%s_i%s.tiff' % (save_path, sample, fov, z_current, label_nuclear),
+                   local_DNAFISH)
+        plt.imsave('%s%s_nuclear_fov%s_z%s_i%s.tiff' % (save_path, sample, fov, z_current, label_nuclear),
+                   local_nuclear)
+        plt.imsave('%s%s_nuclear_seg_fov%s_z%s_i%s.tiff' % (save_path, sample, fov, z_current, label_nuclear),
+                   local_nuclear_seg_convex)
+        plt.imsave('%s%s_DNAFISH_woBg_fov%s_z%s_i%s.tiff' % (save_path, sample, fov, z_current, label_nuclear),
+                   local_DNAFISH_bg_correct)
+        plt.imsave('%s%s_DNAFISH_ecDNAseg_fov%s_z%s_i%s.tiff' % (save_path, sample, fov, z_current, label_nuclear),
+                   ecDNA_seg)
 
         # basic measurements
         local_nuclear_props = regionprops(label(local_nuclear_seg_convex), local_nuclear)
@@ -172,6 +208,7 @@ for i in range(len(data_z)):
         total_int_DNAFISH_norm = mean_int_DNAFISH_norm * area_nuclear
 
         n_ecDNA = len(ecDNA_props)
+        centroid_ind_ecDNA = [ecDNA_props[i].centroid for i in range(len(ecDNA_props))]
         area_ind_ecDNA = [ecDNA_props[i].area for i in range(len(ecDNA_props))]
         area_ratio_ind_ecDNA = list(np.array(area_ind_ecDNA) / area_nuclear)
         total_area_ecDNA = sum(area_ind_ecDNA)
@@ -180,12 +217,12 @@ for i in range(len(data_z)):
         mean_int_ind_ecDNA = [ecDNA_props[i].intensity_mean for i in range(len(ecDNA_props))]
         total_int_ind_ecDNA = list(np.array(area_ind_ecDNA) * np.array(mean_int_ind_ecDNA))
         total_int_ecDNA = sum(total_int_ind_ecDNA)
-        mean_int_ecDNA = total_int_ecDNA / total_area_ecDNA
+        mean_int_ecDNA = total_int_ecDNA / total_area_ecDNA if total_area_ecDNA != 0 else 0
 
         mean_int_ind_ecDNA_norm = list(np.array(mean_int_ind_ecDNA) - mean_int_bg)
         total_int_ind_ecDNA_norm = list(np.array(area_ind_ecDNA) * np.array(mean_int_ind_ecDNA_norm))
         total_int_ecDNA_norm = sum(total_int_ind_ecDNA_norm)
-        mean_int_ecDNA_norm = total_int_ecDNA_norm / total_area_ecDNA
+        mean_int_ecDNA_norm = total_int_ecDNA_norm / total_area_ecDNA if total_area_ecDNA != 0 else 0
 
         percentage_area_ind_ecDNA = list(np.array(sorted(area_ind_ecDNA, reverse=True)) / total_area_ecDNA)
         percentage_area_ratio_ind_ecDNA = list(np.array(sorted(area_ratio_ind_ecDNA, reverse=True)) /
@@ -212,8 +249,44 @@ for i in range(len(data_z)):
         cum_int_ind_ecDNA_norm = dat.list_sum(total_int_ind_ecDNA_norm)
         cum_int_norm_n_half = dat.find_pos(cum_int_ind_ecDNA_norm[-1]/2, cum_int_ind_ecDNA_norm)
 
+        # distance from the hub
+        dis_to_hub_area = 0
+        dis_to_hub_int = 0
+        dis_to_hub_int_norm = 0
+        if n_ecDNA == 0:
+            dis_to_hub_area = -1
+            dis_to_hub_int = -1
+            dis_to_hub_int_norm = -1
+        elif n_ecDNA > 1:
+            ind_ecDNA = pd.DataFrame({'area': area_ind_ecDNA, 'total_int': total_int_ind_ecDNA,
+                                      'total_int_norm': total_int_ind_ecDNA_norm, 'centroid': centroid_ind_ecDNA})
+
+            ind_ecDNA_sort_area = ind_ecDNA.copy().sort_values(by='area', axis=0, ascending=False, inplace=False,
+                                                               ignore_index=True)
+            ind_ecDNA_sort_area['dis'] = \
+                [((ind_ecDNA_sort_area['centroid'][i][0] - ind_ecDNA_sort_area['centroid'][0][0]) ** 2 +
+                  (ind_ecDNA_sort_area['centroid'][i][1] - ind_ecDNA_sort_area['centroid'][0][1]) ** 2) ** 0.5
+                 for i in range(len(ind_ecDNA_sort_area))]
+
+            for ind in range(n_ecDNA - 1):
+                dis_to_hub_area = dis_to_hub_area + ind_ecDNA_sort_area['area'][ind + 1] / total_area_ecDNA * \
+                                  ind_ecDNA_sort_area['dis'][ind + 1]
+
+            ind_ecDNA_sort_int = ind_ecDNA.copy().sort_values(by='total_int', axis=0, ascending=False,
+                                                              inplace=False, ignore_index=True)
+            ind_ecDNA_sort_int['dis'] = \
+                [((ind_ecDNA_sort_int['centroid'][i][0] - ind_ecDNA_sort_int['centroid'][0][0]) ** 2 +
+                  (ind_ecDNA_sort_int['centroid'][i][1] - ind_ecDNA_sort_int['centroid'][0][1]) ** 2) ** 0.5
+                 for i in range(len(ind_ecDNA_sort_int))]
+
+            for ind in range(n_ecDNA - 1):
+                dis_to_hub_int = dis_to_hub_int + ind_ecDNA_sort_int['total_int'][ind + 1] / total_int_ecDNA * \
+                                 ind_ecDNA_sort_int['dis'][ind + 1]
+                dis_to_hub_int_norm = \
+                    dis_to_hub_int_norm + ind_ecDNA_sort_int['total_int_norm'][ind + 1] / total_int_ecDNA_norm * \
+                    ind_ecDNA_sort_int['dis'][ind + 1]
+
         # auto-correlation
-        print("Start auto correlation analysis...")
         _, r, g, dg = mat.auto_correlation(local_DNAFISH_bg_correct, local_nuclear_seg_convex, rmax)
         g_value = (g[1] + g[2] + g[3] + g[4] + g[5]) * 0.2
 
@@ -247,6 +320,43 @@ for i in range(len(data_z)):
                 radial_distribution_relative_r_nuclear_smooth)
         radial_subtract_center = np.mean(radial_subtract[0:40])
         radial_subtract_edge = np.mean(radial_subtract[40:80])
+
+        # relative_r
+        relative_r_area = 0
+        relative_r_int = 0
+        relative_r_int_norm = 0
+        if n_ecDNA == 0:
+            relative_r_area = -1
+            relative_r_int = -1
+            relative_r_int_norm = -1
+        elif n_ecDNA >= 1:
+            ind_ecDNA = pd.DataFrame({'area': area_ind_ecDNA, 'total_int': total_int_ind_ecDNA,
+                                      'total_int_norm': total_int_ind_ecDNA_norm, 'centroid': centroid_ind_ecDNA})
+
+            ind_ecDNA_sort_area = ind_ecDNA.copy().sort_values(by='area', axis=0, ascending=False, inplace=False,
+                                                               ignore_index=True)
+            ind_ecDNA_sort_area['dis'] = \
+                [local_relative_r_map[int(ind_ecDNA_sort_area['centroid'][i][0])][
+                     int(ind_ecDNA_sort_area['centroid'][i][1])]
+                 for i in range(len(ind_ecDNA_sort_area))]
+
+            for ind in range(n_ecDNA):
+                relative_r_area = relative_r_area + ind_ecDNA_sort_area['area'][ind] / total_area_ecDNA * \
+                                  ind_ecDNA_sort_area['dis'][ind]
+
+            ind_ecDNA_sort_int = ind_ecDNA.copy().sort_values(by='total_int', axis=0, ascending=False,
+                                                              inplace=False, ignore_index=True)
+            ind_ecDNA_sort_int['dis'] = \
+                [local_relative_r_map[int(ind_ecDNA_sort_int['centroid'][i][0])][
+                     int(ind_ecDNA_sort_int['centroid'][i][1])]
+                 for i in range(len(ind_ecDNA_sort_int))]
+
+            for ind in range(n_ecDNA):
+                relative_r_int = relative_r_int + ind_ecDNA_sort_int['total_int'][ind] / total_int_ecDNA * \
+                                 ind_ecDNA_sort_int['dis'][ind]
+                relative_r_int_norm = \
+                    relative_r_int_norm + ind_ecDNA_sort_int['total_int_norm'][ind] / total_int_ecDNA_norm * \
+                    ind_ecDNA_sort_int['dis'][ind]
 
         # angle distribution
         local_angle_map = img.angle_map_from_point(local_nuclear_seg_convex, local_nuclear_centroid)
@@ -294,22 +404,22 @@ for i in range(len(data_z)):
                                      cum_percentage_total_int_ind_ecDNA_norm, cum_percentage_total_int_norm_n_half,
                                      cum_area_ind_ecDNA, cum_area_n_half, cum_area_ratio_ind_ecDNA,
                                      cum_area_ratio_n_half, cum_int_ind_ecDNA, cum_int_n_half, cum_int_ind_ecDNA_norm,
-                                     cum_int_norm_n_half]
+                                     cum_int_norm_n_half, dis_to_hub_area, dis_to_hub_int, dis_to_hub_int_norm,
+                                     relative_r_area, relative_r_int, relative_r_int_norm]
 
     else:
-        tif.imwrite('%s%s/%s_DNAFISH_fov%s_z%s_i%s.tif' % (master_folder, sample, sample, fov, z_current, label_nuclear),
+        tif.imwrite('%s%s_DNAFISH_fov%s_z%s_i%s.tif' % (master_path, sample, fov, z_current, label_nuclear),
                     local_DNAFISH)
 
 
-data['max_area_ecDNA'] = [np.max(data['area_individual_ecDNA'][i]) for i in range(len(data))]
+data['max_area_ecDNA'] = [np.max(data['area_individual_ecDNA'][i]+[0]) for i in range(len(data))]
 data['max_area_ratio_ecDNA'] = data['max_area_ecDNA']/data['area_nuclear']
 data['n_ecDNA'] = [len(data['area_individual_ecDNA'][i]) for i in range(len(data))]
-max_n_ecDNA = max(data['n_ecDNA'])
 data['cum_area_ind_ecDNA_filled'] = dat.list_fill_with_last_num(data['cum_area_ind_ecDNA'])
 data['cum_area_ratio_ind_ecDNA_filled'] = dat.list_fill_with_last_num(data['cum_area_ratio_ind_ecDNA'])
 data['cum_int_ind_ecDNA_filled'] = dat.list_fill_with_last_num(data['cum_int_ind_ecDNA'])
 data['cum_int_ind_ecDNA_norm_filled'] = dat.list_fill_with_last_num(data['cum_int_ind_ecDNA_norm'])
 
-data.to_csv('%s%s/%s.txt' % (master_folder, sample, sample), index=False, sep='\t')
+data.to_csv('%s%s.txt' % (master_path, sample), index=False, sep='\t')
 
 print("DONE!")

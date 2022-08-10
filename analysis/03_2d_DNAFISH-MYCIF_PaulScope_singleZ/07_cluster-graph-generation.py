@@ -12,7 +12,7 @@ import shared.display as dis
 import numpy as np
 import os
 
-master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220526_flowFISH_topHits_screen/"
+master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220726_BRDfamily_screen/"
 """features_heatmap = ['area_nuclear', 'mean_int_nuclear', 'total_int_nuclear', 'mean_int_IF', 'total_int_IF', 'n_ecDNA',
                     'mean_int_DNAFISH_norm', 'total_int_DNAFISH_norm', 'mean_int_ecDNA_norm', 'total_int_ecDNA_norm',
                     'mean_int_ind_ecDNA_norm', 'total_int_ind_ecDNA_norm', 'area_ratio_ind_ecDNA',
@@ -22,17 +22,34 @@ features = ['area_nuclear', 'mean_int_DNAFISH_norm', 'mean_int_IF', 'radial_cent
             'mean_int_ecDNA_norm', 'max_area_ratio_ecDNA', 'n_ecDNA', 'cum_area_ratio_n_half',
             'cum_int_norm_n_half', 'dis_to_hub_int_norm', 'g_value', 'angle_value']
 
-features_heatmap = ['mean_int_IF', 'total_int_IF', 'mean_int_ecDNA_norm', 'area_ratio_ecDNA', 'radial_center',
-                    'radial_edge', 'n_ecDNA', 'cum_area_ratio_n_half', 'dis_to_hub_area']
+"""features_heatmap = ['mean_int_IF', 'total_int_IF', 'mean_int_ecDNA_norm', 'area_ratio_ecDNA', 'radial_center',
+                    'relative_r_area', 'n_ecDNA', 'cum_area_ratio_n_half', 'dis_to_hub_area']"""
 
-save_folder = "%sv5_cluster_short/" % master_folder
+features_heatmap = ['n_ecDNA', 'percentage_area_n_half', 'percentage_area_ratio_n_half', 'percentage_int_n_half',
+                    'percentage_int_norm_n_half', 'cum_area_n_half', 'cum_area_ratio_n_half', 'cum_int_n_half',
+                    'cum_int_norm_n_half', 'dis_to_hub_area', 'dis_to_hub_int', 'dis_to_hub_int_norm']
+
+# features_heatmap = ['mean_int_IF', 'total_int_IF']
+
+"""features_heatmap = ['mean_int_DNAFISH', 'mean_int_DNAFISH_norm', 'total_int_DNAFISH', 'total_int_DNAFISH_norm',
+                    'mean_int_ecDNA', 'mean_int_ecDNA_norm', 'total_int_ecDNA', 'total_int_ecDNA_norm',
+                    'total_area_ecDNA', 'area_ratio_ecDNA', 'max_area_ecDNA', 'max_area_ratio_ecDNA',  'g_value',
+                    'angle_value']"""
+
+# features_heatmap = ['radial_center', 'radial_edge', 'relative_r_area', 'relative_r_int', 'relative_r_int_norm']
+
+save_folder = "%sv2_cluster_gamma_degree-of-cluster/" % master_folder
 if not os.path.exists(save_folder):
     os.makedirs(save_folder)
 
-data = pd.read_csv(("%sv5_summary/summary.txt" % master_folder), na_values=['.'], sep='\t')
-data_mean = pd.read_csv(("%sv5_summary/summary_mean.txt" % master_folder), na_values=['.'], sep='\t')
+data = pd.read_csv(("%sv2_summary/summary.txt" % master_folder), na_values=['.'], sep='\t')
+data_mean_full = pd.read_csv(("%sv2_summary/summary_gamma.txt" % master_folder), na_values=['.'], sep='\t')
 data_gene = pd.read_csv("%sgene.txt" % master_folder, na_values=['.'], sep='\t')
 genelist = list(set(data_gene['gene']))
+
+data_mean = data_mean_full[(data_mean_full['n_s'] >= 10) & (data_mean_full['gene'] != 'NTC2')]
+# data_mean = data_mean_full[(data_mean_full['gene'] != 'NTC1') & (data_mean_full['gene'] != 'NTC2')]
+# data_mean = data_mean_full[(data_mean_full['n_s'] >= 50) & (data_mean_full['gene'] != 'NTC1') & (data_mean_full['gene'] != 'NTC2')]
 
 cmap = pcm.get_cmap('Spectral')
 line_colors = []
@@ -140,3 +157,5 @@ parallel_coordinates(data_norm, 'sample', color=line_color_4, alpha=0.3)
 plt.legend(loc=3)
 plt.savefig('%s/pc.pdf' % save_folder)
 plt.close()"""
+
+print("DONE!")

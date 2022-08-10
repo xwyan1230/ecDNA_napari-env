@@ -8,9 +8,9 @@ import napari
 
 # INPUT PARAMETERS
 # file info
-master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220708_Natasha_ColoDM_interphase/"
-sample = 'DMSO1'
-master_path = '%s220708_COLODM_interphase_%s/' % (master_folder, sample)
+master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220722_Natasha_ColoDM_Jun/"
+sample = 'triptolide'
+master_path = '%s%s/' % (master_folder, sample)
 raw_folder = 'TileScan 1'
 seg_folder = '02_seg'
 total_fov = 50
@@ -35,18 +35,20 @@ n_nuclear = pd.DataFrame(columns=['sample', 'FOV', 'total', 'fov_skipped', 'surr
 for f in range(total_fov):
     fov = f + start_fov
     print("Start nuclear analysis FOV %s/%s" % (fov, total_fov))
-    file_prefix = "%s_Position %s" % (raw_folder, fov)
+    file_prefix = "%s_Position %s_RAW" % (raw_folder, fov)
     duplicate_z = 0
     discontinue_z = 0
     fewer_z = 0
     filtered_total = 0
     surrounding_z = 0
     # load images
-    im_z_stack_nuclear = img.img_to_int(skio.imread("%s%s/%s_ch00.tif" % (master_path, raw_folder, file_prefix),
-                                                    plugin="tifffile"))
+    """im_z_stack_nuclear = img.img_to_int(skio.imread("%s%s/%s_ch00.tif" % (master_path, raw_folder, file_prefix),
+                                                        plugin="tifffile"))
 
-    im_z_stack_DNAFISH = img.img_to_int(skio.imread("%s%s/%s_ch01.tif" % (master_path, raw_folder, file_prefix),
-                                                    plugin="tifffile"))
+        im_z_stack_DNAFISH = img.img_to_int(skio.imread("%s%s/%s_ch01.tif" % (master_path, raw_folder, file_prefix),
+                                                        plugin="tifffile"))"""
+    im_z_stack_nuclear = skio.imread("%s%s/%s_ch00.tif" % (master_path, raw_folder, file_prefix), plugin="tifffile")
+    im_z_stack_DNAFISH = skio.imread("%s%s/%s_ch01.tif" % (master_path, raw_folder, file_prefix), plugin="tifffile")
 
     total_z = im_z_stack_nuclear.shape[0]
     im_z_stack_seg_convex = skio.imread("%s%s/%s_seg_fov%s.tif" % (master_path, seg_folder, sample, fov),
@@ -62,7 +64,7 @@ for f in range(total_fov):
     bg_li_seg = im_z_stack_nuclear[z_analyze] < threshold_li_cutoff
     fov_bg = im_z_stack_nuclear[z_analyze] * bg_li_seg
     mean_fov_bg = np.sum(fov_bg) / np.sum(bg_li_seg)
-    if mean_fov_bg > 1500:
+    if mean_fov_bg > 0:
         # identify each nucleus
         for i in range(n_nuclear_fov):
             print("Analyzing nucleus %s/%s" % (i + 1, n_nuclear_fov))
