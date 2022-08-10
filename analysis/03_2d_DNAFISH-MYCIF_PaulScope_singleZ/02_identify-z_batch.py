@@ -8,11 +8,16 @@ import napari
 
 # INPUT PARAMETERS
 # file info
-master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220526_flowFISH_topHits_screen/"
-sample_lst = ['B3', 'B4', 'B5', 'B6']
+master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220726_BRDfamily_screen/"
+sample_row_lst = ['G']
+sample_col_lst = np.arange(2, 12, 1)
+sample_lst = []
+for sample_row in sample_row_lst:
+    for sample_col in sample_col_lst:
+        sample_lst.append("%s%s" % (sample_row, sample_col))
 raw_folder = '01_raw'
 seg_folder = '02_seg'
-total_fov = 5
+total_fov = 15
 # cell info
 pixel_size = 102  # nm (sp8 confocal 3144x3144:58.7, Paul scope 2048x2048:102)
 cell_avg_size = 10  # um (Colo)
@@ -75,7 +80,7 @@ for sample in sample_lst:
         fov_li = im_z_stack_nuclear[z_analyze] * li_seg
         mean_fov_bg = np.sum(fov_bg) / np.sum(bg_li_seg)
         mean_fov_li = np.sum(fov_li) / np.sum(li_seg)
-        if (mean_fov_bg > 1500) & (mean_fov_li < 40000):
+        if (mean_fov_bg > 0) & (mean_fov_li < 100000):  # 1500, 40000
 
             # identify each nucleus
             for i in range(n_nuclear_fov):
