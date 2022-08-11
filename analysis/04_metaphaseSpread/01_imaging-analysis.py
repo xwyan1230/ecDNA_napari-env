@@ -1,5 +1,5 @@
 from skimage.filters import threshold_otsu, threshold_local, sobel
-from skimage.morphology import extrema, binary_dilation, binary_erosion, disk, medial_axis
+from skimage.morphology import extrema, binary_dilation, binary_erosion, disk, medial_axis, dilation
 from skimage.measure import label, regionprops_table, regionprops
 import shared.objects as obj
 from skimage.segmentation import watershed
@@ -17,9 +17,9 @@ import os
 # file info
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220809_Aarohi_chromosomeRecombination_metaphase" \
                 "/08052022_ChrRecomb_KCl_timept/"
-sample = 'Jun16'
+sample = 'ATCC'
 save_folder = master_folder
-total_fov = 73
+total_fov = 76
 start_fov = 1
 
 data = pd.DataFrame(columns=['nuclear', 'FOV', 'DM_n', 'DM_ind_mean_int', 'DM_ind_area', 'DM_ind_total_int',
@@ -31,8 +31,9 @@ data = pd.DataFrame(columns=['nuclear', 'FOV', 'DM_n', 'DM_ind_mean_int', 'DM_in
 nuclear = 0
 for f in range(total_fov):
     fov = f + start_fov
-    img_hoechst = skio.imread("%s%s/ColoDM_%s_16m_%s_RAW_ch00.tif" % (master_folder, sample, sample[:3], fov), plugin="tifffile")
-    img_FISH = skio.imread("%s%s/ColoDM_%s_16m_%s_RAW_ch01.tif" % (master_folder, sample, sample[:3], fov), plugin="tifffile")
+    fov = 1
+    img_hoechst = skio.imread("%s%s/ColoDM_%s_12m_%s_RAW_ch00.tif" % (master_folder, sample, sample, fov), plugin="tifffile")
+    img_FISH = skio.imread("%s%s/ColoDM_%s_12m_%s_RAW_ch01.tif" % (master_folder, sample, sample, fov), plugin="tifffile")
 
     viewer = napari.Viewer()
     viewer.add_image(img_hoechst, blending='additive', colormap='blue', contrast_limits=[0, 20000])
@@ -63,17 +64,21 @@ for f in range(total_fov):
         chromosome_seg = obj.remove_large(chromosome_seg, 5000)
         chromosome_seg = binary_erosion(chromosome_seg)
         chromosome_seg = obj.remove_small(chromosome_seg, 100)
-        chromosome_seg = binary_dilation(chromosome_seg)
-        chromosome_seg = binary_dilation(chromosome_seg)
         chromosome_seg_mean_int = np.sum(cell_hoechst * chromosome_seg) / np.sum(chromosome_seg)
-        chromosome_seg_filter = np.zeros_like(cell_hoechst)
-        chromosome_seg_label = label(chromosome_seg)
-        chromosome_props = regionprops(chromosome_seg_label, cell_hoechst)
 
+        chromosome_seg_erosion = binary_erosion(chromosome_seg)
+        chromosome_seg_erosion = binary_erosion(chromosome_seg_erosion)
+        chromosome_seg_label = label(chromosome_seg_erosion)
+        for k in range(4):
+            chromosome_seg_label = dilation(chromosome_seg_label)
+
+        chromosome_seg_filter = np.zeros_like(cell_hoechst)
         img_bg_hoechst = np.zeros_like(cell_hoechst)
         img_bg_hoechst = sub_masks.copy()
         img_bg_hoechst[chromosome_seg == 1] = 0
         img_bg_hoechst_int = np.sum(cell_hoechst * img_bg_hoechst) / np.sum(img_bg_hoechst)
+
+        chromosome_props = regionprops(chromosome_seg_label, cell_hoechst)
 
         for j in range(len(chromosome_props)):
             circ = 4 * math.pi * chromosome_props[j].area / (chromosome_props[j].perimeter) ** 2
@@ -121,11 +126,17 @@ for f in range(total_fov):
         FISH_seg_HSR = np.zeros_like(cell_FISH)
         for j in range(len(HSR_props)):
             if chromosome_seg_filter[int(HSR_props[j].centroid[0])][int(HSR_props[j].centroid[1])] == 1:
-                if HSR_props[j].area > 100:
+                if HSR_props[j].area > 70:
                     FISH_seg_HSR[FISH_seg_HSR_label == HSR_props[j].label] = 1
-                elif HSR_props[j].area > 30:
+                else:
                     FISH_seg_small_temp = np.zeros_like(cell_FISH)
                     FISH_seg_small_temp[FISH_seg_HSR_label == HSR_props[j].label] = 1
+                    centroid = HSR_props[j].centroid
+                    for k in range(len(HSR_props)):
+                        centroid_distance = ((HSR_props[k].centroid[0] - centroid[0]) ** 2
+                                             + (HSR_props[k].centroid[1] - centroid[1]) ** 2) ** 0.5
+                        if centroid_distance < 5:
+                            FISH_seg_small_temp[FISH_seg_HSR_label == HSR_props[k].label] = 1
                     for k in range(5):
                         FISH_seg_small_temp = binary_dilation(FISH_seg_small_temp)
                     chromosome_seg_wo_temp = np.zeros_like(cell_FISH)
@@ -167,7 +178,10 @@ for f in range(total_fov):
         DM_total_int = sum(DM_ind_total_int)
 
         DM_copy = len(DM_props)
-        HSR_copy = int(HSR_total_int * DM_copy / DM_total_int)
+        if DM_total_int != 0:
+            HSR_copy = int(HSR_total_int * DM_copy / DM_total_int)
+        else:
+            HSR_copy = -1
         DM_percentage = DM_total_int / (DM_total_int + HSR_total_int)
         HSR_percentage = HSR_total_int / (DM_total_int + HSR_total_int)
 
