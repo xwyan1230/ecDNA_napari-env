@@ -21,8 +21,8 @@ sample = 'XY'
 save_path = "%sv3_img/%s/" % (master_folder, sample)
 if not os.path.exists(save_path):
     os.makedirs(save_path)
-total_fov = 79
 start_fov = 1
+total_fov = 80 - start_fov
 
 # IMAGING ANALYSIS
 data = pd.DataFrame(columns=['nuclear', 'FOV', 'DM_n', 'DM_ind_mean_int', 'DM_ind_area', 'DM_ind_total_int',
@@ -38,7 +38,7 @@ for f in range(total_fov):
 
     viewer = napari.Viewer()
     viewer.add_image(img_hoechst, blending='additive', colormap='blue', contrast_limits=[0, img_hoechst.max()])
-    viewer.add_image(img_FISH, blending='additive', colormap='green', contrast_limits=[0, img_FISH.max()*0.8])
+    viewer.add_image(img_FISH, blending='additive', colormap='green', contrast_limits=[0, img_FISH.max()*0.6])
     shapes = viewer.add_shapes(name='Shapes', ndim=2)
     napari.run()
     shapes_layer = viewer.layers['Shapes']
@@ -90,17 +90,6 @@ for f in range(total_fov):
             if ((chromosome_props[j].intensity_mean - img_bg_hoechst_int) >
                     (chromosome_seg_mean_int - img_bg_hoechst_int) * 0.5):
                 chromosome_seg_filter[chromosome_seg_label == chromosome_props[j].label] = 1
-
-        # manual correction of chromosome segmentation
-        viewer = napari.Viewer()
-        viewer.add_image(cell_hoechst)
-        viewer.add_image(chromosome_seg_filter, blending='additive')
-        shapes_remove = viewer.add_shapes(name='To be removed', ndim=2)
-        shapes_add = viewer.add_shapes(name='To be added', ndim=2)
-        napari.run()
-
-        chromosome_seg_filter = ima.napari_add_or_remove(shapes_remove.data, 'remove', chromosome_seg_filter)
-        chromosome_seg_filter = ima.napari_add_or_remove(shapes_add.data, 'add', chromosome_seg_filter)
 
         # measure maximum FISH intensity
         FISH_max = cell_FISH.max()
@@ -249,38 +238,29 @@ for f in range(total_fov):
         data.loc[len(data.index)] = [nuclear, fov, len(DM_props), DM_ind_mean_int, DM_ind_area, DM_ind_total_int,
                                      DM_total_int, DM_copy, len(HSR_props), HSR_ind_mean_int, HSR_ind_area,
                                      HSR_ind_total_int, HSR_total_int, HSR_copy, DM_percentage, HSR_percentage]
-
-        viewer = napari.Viewer()
-        viewer.add_image(cell_hoechst, blending='additive', colormap='blue', contrast_limits=[0, cell_hoechst.max()])
-        viewer.add_image(cell_FISH, blending='additive', colormap='green', contrast_limits=[0, cell_FISH.max()*0.8])
-        viewer.add_image(FISH_seg_HSR, blending='additive')
-        viewer.add_image(FISH_seg_DM, blending='additive')
-        viewer.add_image(chromosome_seg_filter, blending='additive', colormap='yellow')
-        napari.run()
+        data.to_csv('%s%s.txt' % (save_path, sample), index=False, sep='\t')
 
         viewer1 = napari.Viewer()
         viewer1.add_image(cell_hoechst, blending='additive', colormap='blue', contrast_limits=[0, cell_hoechst.max()])
         viewer1.add_image(cell_FISH, blending='additive', colormap='green', contrast_limits=[0, cell_FISH.max() * 0.8])
-        plt.imsave('%s%s_%s.tiff' % (save_path, sample, fov), dis.blending(viewer1))
+        plt.imsave('%s%s_%s_%s.tiff' % (save_path, sample, fov, nuclear), dis.blending(viewer1))
         viewer1.add_image(FISH_seg_HSR, blending='additive')
-        plt.imsave('%s%s_%s_HSR.tiff' % (save_path, sample, fov), dis.blending(viewer1))
+        plt.imsave('%s%s_%s_%s_HSR.tiff' % (save_path, sample, fov, nuclear), dis.blending(viewer1))
         viewer1.close()
 
         viewer2 = napari.Viewer()
         viewer2.add_image(cell_hoechst, blending='additive', colormap='blue', contrast_limits=[0, cell_hoechst.max()])
         viewer2.add_image(cell_FISH, blending='additive', colormap='green', contrast_limits=[0, cell_FISH.max() * 0.8])
         viewer2.add_image(FISH_seg_DM, blending='additive')
-        plt.imsave('%s%s_%s_DM.tiff' % (save_path, sample, fov), dis.blending(viewer2))
+        plt.imsave('%s%s_%s_%s_DM.tiff' % (save_path, sample, fov, nuclear), dis.blending(viewer2))
         viewer2.close()
 
         viewer3 = napari.Viewer()
         viewer3.add_image(cell_hoechst, blending='additive', colormap='blue', contrast_limits=[0, cell_hoechst.max()])
         viewer3.add_image(cell_FISH, blending='additive', colormap='green', contrast_limits=[0, cell_FISH.max() * 0.8])
         viewer3.add_image(chromosome_seg_filter, blending='additive', colormap='yellow')
-        plt.imsave('%s%s_%s_chromosome.tiff' % (save_path, sample, fov), dis.blending(viewer3))
+        plt.imsave('%s%s_%s_%s_chromosome.tiff' % (save_path, sample, fov, nuclear), dis.blending(viewer3))
         viewer3.close()
-
-data.to_csv('%s%s.txt' % (save_path, sample), index=False, sep='\t')
 
 print("DONE!")
 
