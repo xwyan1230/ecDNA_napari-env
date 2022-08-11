@@ -31,6 +31,7 @@ data = pd.DataFrame(columns=['nuclear', 'FOV', 'DM_n', 'DM_ind_mean_int', 'DM_in
 nuclear = 0
 for f in range(total_fov):
     fov = f + start_fov
+    print(fov)
     img_hoechst = skio.imread("%s%s/ColoDM_%s_12m_%s_RAW_ch00.tif" % (master_folder, sample, sample, fov), plugin="tifffile")
     img_FISH = skio.imread("%s%s/ColoDM_%s_12m_%s_RAW_ch01.tif" % (master_folder, sample, sample, fov), plugin="tifffile")
 
@@ -86,9 +87,9 @@ for f in range(total_fov):
                 chromosome_seg_filter[chromosome_seg_label == chromosome_props[j].label] = 1
 
         FISH_max = cell_FISH.max()
-        print(FISH_max)
+        """print(FISH_max)
         print(FISH_max/2)
-        print(FISH_max/5)
+        print(FISH_max/5)"""
         maxima = np.zeros_like(cell_FISH)
         maxima = extrema.h_maxima(cell_FISH, 450)  # 700
         maxima_outside_chromosome = np.zeros_like(cell_FISH)
@@ -120,7 +121,7 @@ for f in range(total_fov):
         FISH_seg_total[FISH_seg_outsideChromosome_label > 1] = 1
 
         FISH_seg_HSR_label = np.zeros_like(cell_FISH)
-        FISH_seg_HSR_label = label(FISH_seg_highInt.copy())
+        FISH_seg_HSR_label = label(FISH_seg_total.copy())
         HSR_props = regionprops(FISH_seg_HSR_label)
         FISH_seg_HSR = np.zeros_like(cell_FISH)
         for j in range(len(HSR_props)):
@@ -134,7 +135,7 @@ for f in range(total_fov):
                     for k in range(len(HSR_props)):
                         centroid_distance = ((HSR_props[k].centroid[0] - centroid[0]) ** 2
                                              + (HSR_props[k].centroid[1] - centroid[1]) ** 2) ** 0.5
-                        if centroid_distance < 5:
+                        if centroid_distance < 12:
                             FISH_seg_small_temp[FISH_seg_HSR_label == HSR_props[k].label] = 1
                     for k in range(5):
                         FISH_seg_small_temp = binary_dilation(FISH_seg_small_temp)
