@@ -3,6 +3,8 @@ from skimage.filters import threshold_otsu
 from skimage.morphology import binary_dilation, binary_erosion, disk
 import shared.objects as obj
 import random
+from matplotlib.path import Path
+import shared.dataframe as dat
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy
@@ -66,6 +68,18 @@ load_3d_image
 angle_map_from_point
     FUNCTION: generate angle map from point for given image
     SYNTAX:   angle_map_from_point(img: np.array, point: tuple)
+
+polygon_to_mask
+    FUNCTION: convert napari shape polygon into mask
+    SYNTAX:   polygon_to_mask(img_shape: list, polygon: list)
+
+napari_add_or_remove
+    FUNCTION: manual correction by adding or removing objects based on napari shapes
+    SYNTAX:   napari_add_or_remove(shape_data, option: str, modify_mask: np.array)
+
+napari_change_between_masks
+    FUNCTION: manual correction by moving objects between masks based on napari shapes
+    SYNTAX:   napari_change_between_masks(shape_data, change_from_mask: np.array, change_to_mask: np.array)
 """
 
 
@@ -399,3 +413,67 @@ def angle_map_from_point(img: np.array, point: tuple):
     out[(ydis <= 0) & (xdis < 0)] = 360 - out[(ydis <= 0) & (xdis < 0)]
 
     return out
+
+
+def polygon_to_mask(img_shape: list, polygon: list):
+    """
+    Convert napari shape polygon into mask
+
+    :param img_shape: image.shape()
+    :param polygon: list of points
+    :return:
+    """
+    poly_data = dat.points_exchange_xy(polygon)
+    nx = img_shape[1]
+    ny = img_shape[0]
+    x, y = np.meshgrid(np.arange(nx), np.arange(ny))
+    x, y = x.flatten(), y.flatten()
+    points = np.vstack((x, y)).T
+    path = Path(poly_data)
+    grid = path.contains_points(points)
+    grid = grid.reshape(ny, nx)
+    mask = grid
+
+    return mask
+
+
+def napari_add_or_remove(shape_data, option: str, modify_mask: np.array):
+    """
+    Manual correction by adding or removing objects based on napari shapes
+
+    :param shape_data: polygon data from napari shape
+    :param option: only accept 'add' or 'remove'
+    :param modify_mask: the mask that is to be modified
+    :return:
+    """
+    out = modify_mask.copy()
+    for i in range(len(shape_data)):
+        poly_data = shape_data[i]
+        mask = polygon_to_mask(modify_mask.shape, poly_data)
+        if option == 'add':
+            out[mask == 1] = 1
+        elif option == 'remove':
+            out[mask == 1] = 0
+
+    return out
+
+
+def napari_change_between_masks(shape_data, change_from_mask: np.array, change_to_mask: np.array):
+    """
+    Manual correction by moving objects between masks based on napari shapes
+
+    :param shape_data: polygon data from napari shape
+    :param change_from_mask: the mask that is to be removed
+    :param change_to_mask: the mask that is to be added
+    :return:
+    """
+    out_from = change_from_mask.copy()
+    out_to = change_to_mask.copy()
+    for i in range(len(shape_data)):
+        poly_data = shape_data[i]
+        mask = polygon_to_mask(change_from_mask.shape, poly_data)
+        out_to[mask * change_from_mask == 1] = 1
+        out_from[mask == 1] = 0
+
+    return out_from, out_to
+

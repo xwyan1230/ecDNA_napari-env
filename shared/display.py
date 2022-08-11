@@ -30,6 +30,10 @@ plot_volcano_hit
     FUNCTION: plot volcano plot for FRAP screen (with hit displayed)
     SYNTAX:   plot_volcano_hit(pd_p: pd.DataFrame, pd_value: pd.DataFrame, pd_gamma: pd.DataFrame, feature: str, 
               center: float, threshold: float, show_gene: str, save_path: str)
+
+blending
+    FUNCTION: for exporting napari view images (compress color images together)
+    SYNTAX:   blending(view)
 """
 
 
@@ -168,3 +172,26 @@ def plot_volcano_hit(pd_p: pd.DataFrame, pd_value: pd.DataFrame, pd_gamma: pd.Da
 
     plt.savefig('%s%s_hit.pdf' % (save_path, feature))
     plt.close()
+
+
+def blending(view):
+    """
+    For exporting napari view images (compress color images together)
+
+    :param view: napari viewer
+    :return:
+    """
+    blended = np.zeros(view.layers[0].data.shape + (4,))
+    for layer in view.layers:
+        # normalize data by clims
+        normalized_data = (layer.data - layer.contrast_limits[0]) / (
+                    layer.contrast_limits[1] - layer.contrast_limits[0])
+        colormapped_data = layer.colormap.map(normalized_data.flatten())
+        colormapped_data = colormapped_data.reshape(normalized_data.shape + (4,))
+
+        blended = blended + colormapped_data
+
+    blended[..., 3] = 1  # set alpha channel to 1
+    blended[blended > 1] = 1
+    blended[blended < 0] = 0
+    return blended

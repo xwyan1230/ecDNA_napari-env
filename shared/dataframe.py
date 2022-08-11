@@ -72,6 +72,10 @@ List related:
     list_invert
         FUNCTION: invert a list
         SYNTAX:   list_invert(lst:list)
+    
+    points_exchange_xy
+        FUNCTION: exchange x and y for a list of points
+        SYNTAX:   points_exchange_xy(lst: list)
         
 Matrix related:
     matrix_pad_with_zeros
@@ -459,5 +463,19 @@ def list_invert(lst: list):
     for i in range(len(lst)):
         out.append(lst_temp[-1])
         lst_temp.pop()
+
+    return out
+
+
+def points_exchange_xy(lst: list):
+    """
+    Exchange x and y for a list of points
+
+    :param lst:
+    :return:
+    """
+    out = []
+    for i in range(len(lst)):
+        out.append([lst[i][1], lst[i][0]])
 
     return out
