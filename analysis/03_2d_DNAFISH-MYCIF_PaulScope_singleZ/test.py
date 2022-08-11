@@ -1,2 +1,4 @@
+import numpy as np
+my_array = np.array([[1,2,3], [4,5,6], [3,5,1]])
 
-my_list_of_lists = [my_list[i:i + n] for i in range(0, len(my_list), 8)]
+print(my_array.max())

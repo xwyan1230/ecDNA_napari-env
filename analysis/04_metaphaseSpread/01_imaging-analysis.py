@@ -1,5 +1,3 @@
-import random
-import shared.segmentation as seg
 from skimage.filters import threshold_otsu, threshold_local, sobel
 from skimage.morphology import extrema, binary_dilation, binary_erosion, disk, medial_axis
 from skimage.measure import label, regionprops_table, regionprops
@@ -11,6 +9,7 @@ import skimage.io as skio
 from skimage.morphology import extrema, remove_small_objects
 import napari
 import numpy as np
+import math
 import pandas as pd
 import os
 
@@ -32,7 +31,6 @@ data = pd.DataFrame(columns=['nuclear', 'FOV', 'DM_n', 'DM_ind_mean_int', 'DM_in
 nuclear = 0
 for f in range(total_fov):
     fov = f + start_fov
-    print(fov)
     img_hoechst = skio.imread("%s%s/ColoDM_%s_16m_%s_RAW_ch00.tif" % (master_folder, sample, sample[:3], fov), plugin="tifffile")
     img_FISH = skio.imread("%s%s/ColoDM_%s_16m_%s_RAW_ch01.tif" % (master_folder, sample, sample[:3], fov), plugin="tifffile")
 
@@ -71,10 +69,22 @@ for f in range(total_fov):
         chromosome_seg_filter = np.zeros_like(cell_hoechst)
         chromosome_seg_label = label(chromosome_seg)
         chromosome_props = regionprops(chromosome_seg_label, cell_hoechst)
+
+        img_bg_hoechst = np.zeros_like(cell_hoechst)
+        img_bg_hoechst = sub_masks.copy()
+        img_bg_hoechst[chromosome_seg == 1] = 0
+        img_bg_hoechst_int = np.sum(cell_hoechst * img_bg_hoechst) / np.sum(img_bg_hoechst)
+
         for j in range(len(chromosome_props)):
-            if chromosome_props[j].intensity_mean > chromosome_seg_mean_int * 0.7:
+            circ = 4 * math.pi * chromosome_props[j].area / (chromosome_props[j].perimeter) ** 2
+            if ((chromosome_props[j].intensity_mean - img_bg_hoechst_int) > \
+                    (chromosome_seg_mean_int - img_bg_hoechst_int) * 0.5) & (circ < 0.90):
                 chromosome_seg_filter[chromosome_seg_label == chromosome_props[j].label] = 1
 
+        FISH_max = cell_FISH.max()
+        print(FISH_max)
+        print(FISH_max/2)
+        print(FISH_max/5)
         maxima = np.zeros_like(cell_FISH)
         maxima = extrema.h_maxima(cell_FISH, 450)  # 700
         maxima_outside_chromosome = np.zeros_like(cell_FISH)
@@ -83,7 +93,7 @@ for f in range(total_fov):
         elevation_map = np.zeros_like(cell_FISH)
         elevation_map = sobel(cell_FISH)
         markers = np.zeros_like(cell_FISH)
-        markers[cell_FISH < 3500] = 1
+        markers[cell_FISH < (FISH_max/2)] = 1  # 7500
         markers[maxima == 1] = 2
         FISH_seg_highInt = np.zeros_like(cell_FISH)
         FISH_seg_highInt = watershed(elevation_map, markers)
@@ -93,7 +103,7 @@ for f in range(total_fov):
         FISH_seg_highInt[FISH_seg_highInt_label > 1] = 1
 
         markers = np.zeros_like(cell_FISH)
-        markers[cell_FISH < 1500] = 1
+        markers[cell_FISH < (FISH_max/5)] = 1  # 2500
         markers[maxima_outside_chromosome == 1] = 2
         FISH_seg_outsideChromosome = np.zeros_like(cell_FISH)
         FISH_seg_outsideChromosome = watershed(elevation_map, markers)
