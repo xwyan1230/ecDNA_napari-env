@@ -31,7 +31,6 @@ data = pd.DataFrame(columns=['nuclear', 'FOV', 'DM_n', 'DM_ind_mean_int', 'DM_in
 nuclear = 0
 for f in range(total_fov):
     fov = f + start_fov
-    fov = 1
     img_hoechst = skio.imread("%s%s/ColoDM_%s_12m_%s_RAW_ch00.tif" % (master_folder, sample, sample, fov), plugin="tifffile")
     img_FISH = skio.imread("%s%s/ColoDM_%s_12m_%s_RAW_ch01.tif" % (master_folder, sample, sample, fov), plugin="tifffile")
 
@@ -87,9 +86,9 @@ for f in range(total_fov):
                 chromosome_seg_filter[chromosome_seg_label == chromosome_props[j].label] = 1
 
         FISH_max = cell_FISH.max()
-        """print(FISH_max)
+        print(FISH_max)
         print(FISH_max/2)
-        print(FISH_max/5)"""
+        print(FISH_max/5)
         maxima = np.zeros_like(cell_FISH)
         maxima = extrema.h_maxima(cell_FISH, 450)  # 700
         maxima_outside_chromosome = np.zeros_like(cell_FISH)
