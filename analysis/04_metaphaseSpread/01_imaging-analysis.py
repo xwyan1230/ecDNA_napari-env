@@ -87,9 +87,9 @@ for f in range(total_fov):
                 chromosome_seg_filter[chromosome_seg_label == chromosome_props[j].label] = 1
 
         FISH_max = cell_FISH.max()
-        print(FISH_max)
+        """print(FISH_max)
         print(FISH_max/2)
-        print(FISH_max/5)
+        print(FISH_max/5)"""
         maxima = np.zeros_like(cell_FISH)
         maxima = extrema.h_maxima(cell_FISH, 450)  # 700
         maxima_outside_chromosome = np.zeros_like(cell_FISH)
@@ -195,7 +195,6 @@ for f in range(total_fov):
         viewer.add_image(FISH_seg_HSR)
         viewer.add_image(FISH_seg_DM)
         viewer.add_image(chromosome_seg_filter, blending='additive', colormap='yellow')
-        viewer.add_image(chromosome_seg)
         napari.run()
 
 
