@@ -21,13 +21,17 @@ sample = 'XY'
 save_path = "%sv3_img/%s/" % (master_folder, sample)
 if not os.path.exists(save_path):
     os.makedirs(save_path)
-start_fov = 1
-total_fov = 80 - start_fov
+start_fov = 6
+total_fov = 70 - start_fov
 
 # IMAGING ANALYSIS
-data = pd.DataFrame(columns=['nuclear', 'FOV', 'DM_n', 'DM_ind_mean_int', 'DM_ind_area', 'DM_ind_total_int',
-                             'DM_total_int', 'DM_copy', 'HSR_n', 'HSR_ind_mean_int', 'HSR_ind_area',
-                             'HSR_ind_total_int', 'HSR_total_int', 'HSR_copy', 'DM_percentage', 'HSR_percentage'])
+export_file = '%s%s.txt' % (save_path, sample)
+if os.path.exists(export_file):
+    data = pd.read_csv(export_file, na_values=['.'], sep='\t')
+else:
+    data = pd.DataFrame(columns=['nuclear', 'FOV', 'DM_n', 'DM_ind_mean_int', 'DM_ind_area', 'DM_ind_total_int',
+                                 'DM_total_int', 'DM_copy', 'HSR_n', 'HSR_ind_mean_int', 'HSR_ind_area',
+                                 'HSR_ind_total_int', 'HSR_total_int', 'HSR_copy', 'DM_percentage', 'HSR_percentage'])
 # load images
 nuclear = 0
 for f in range(total_fov):
