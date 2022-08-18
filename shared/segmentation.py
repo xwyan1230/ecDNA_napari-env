@@ -60,6 +60,11 @@ get_mean_int_of_max_area
 obj_to_convex
     FUNCTION: transform objects into its corresponding convex objects
     SYNTAX:   obj_to_convex(pixels: np.array)
+
+obj_to_convex_filter
+    FUNCTION: transform objects into its corresponding convex objects, only real area/convex area larger 
+              than threshold will be converted
+    SYNTAX:   obj_to_convex_filter(img_obj: np.array, threshold=0.9)
     
 filter_solidity
     FUNCTION: filter labeled objects based on solidity
@@ -527,6 +532,29 @@ def obj_to_convex(img_obj: np.array):
         centroid_convex = regionprops(label(convex_local))[0].centroid
         out = img.image_paste_fix_value(out, convex_local, [int(centroid[0] - centroid_convex[0]),
                                                             int(centroid[1] - centroid_convex[1])], i)
+
+    return out
+
+
+def obj_to_convex_filter(img_obj: np.array, threshold=0.9):
+    """
+    Transform objects into its corresponding convex objects, only real area/convex area larger than threshold
+    will be converted
+    :param img_obj: np.array, labeled image
+    :param threshold: used to filter ratio between real area/convex area, smaller than threshold will not be
+                    converted into convex
+    :return:
+    """
+    out = np.zeros_like(img_obj)
+    props = regionprops(img_obj)
+    for i in range(len(props)):
+        convex_local = props[i].convex_image
+        area_ratio = props[i].area/convex_local.sum()
+        if area_ratio > threshold:
+            centroid = props[i].centroid
+            centroid_convex = regionprops(label(convex_local))[0].centroid
+            out = img.image_paste_fix_value(out, convex_local, [int(centroid[0] - centroid_convex[0]),
+                                                                int(centroid[1] - centroid_convex[1])], i)
 
     return out
 

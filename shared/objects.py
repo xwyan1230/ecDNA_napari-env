@@ -266,3 +266,5 @@ def object_count(obj: np.array):
     count_obj = len(obj_prop)
 
     return count_obj
+
+
