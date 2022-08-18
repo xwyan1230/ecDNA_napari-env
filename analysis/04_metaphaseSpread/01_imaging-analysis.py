@@ -17,12 +17,12 @@ import os
 # file info
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220809_Aarohi_chromosomeRecombination_metaphase" \
                 "/08052022_ChrRecomb_KCl_timept/"
-sample = 'XY'
+sample = 'ATCC'
 save_path = "%sv3_img/%s/" % (master_folder, sample)
 if not os.path.exists(save_path):
     os.makedirs(save_path)
-start_fov = 6
-total_fov = 70 - start_fov
+start_fov = 58
+total_fov = 77 - start_fov
 
 # IMAGING ANALYSIS
 export_file = '%s%s.txt' % (save_path, sample)
