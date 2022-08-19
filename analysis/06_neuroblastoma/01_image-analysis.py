@@ -1,18 +1,14 @@
 import shared.segmentation as seg
-from skimage.morphology import disk, dilation
 from skimage.measure import regionprops, label
-from skimage.filters import threshold_otsu, threshold_local, threshold_yen, sobel, try_all_threshold
-from skimage.segmentation import clear_border
+from skimage.filters import threshold_otsu, threshold_local, sobel
 from skimage.morphology import extrema, binary_dilation, binary_erosion, disk
 import shared.objects as obj
 import shared.image as ima
-import matplotlib.pyplot as plt
 from skimage import segmentation
-from scipy import ndimage
-import math
 import numpy as np
+import matplotlib.pyplot as plt
 import skimage.io as skio
-import tifffile as tif
+import shared.display as dis
 import pandas as pd
 import napari
 import os
@@ -20,7 +16,8 @@ import os
 # INPUT PARAMETERS
 # file info
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220817_neuroblastoma/"
-sample = 'KV'
+sample = 'NG'
+save_path = master_folder
 
 # segmentation
 local_factor_nuclear = 151
@@ -32,9 +29,9 @@ convex_conversion_threshold = 0.85
 local_size = 100
 
 # load images
-img_nuclear = skio.imread("%s%s_3b.BMP" % (master_folder, sample))[:, :, 2]
-img_DNAFISH = skio.imread("%s%s_3g.BMP" % (master_folder, sample))[:, :, 1]
-img_centromere = skio.imread("%s%s_3r.BMP" % (master_folder, sample))[:, :, 0]
+img_nuclear = skio.imread("%s%s_2b.BMP" % (master_folder, sample))[:, :, 2]
+img_DNAFISH = skio.imread("%s%s_2g.BMP" % (master_folder, sample))[:, :, 1]
+img_centromere = skio.imread("%s%s_2r.BMP" % (master_folder, sample))[:, :, 0]
 
 # bg_correction
 bg_val_nuclear = seg.get_bg_int([img_nuclear])[0]
@@ -129,7 +126,28 @@ for i in range(len(nuclear_props)):
 viewer = napari.Viewer()
 viewer.add_image(img_nuclear_bg_corrected, blending='additive', colormap='blue')
 viewer.add_image(img_DNAFISH_bg_corrected, blending='additive', colormap='green')
-viewer.add_image(img_centromere_bg_corrected, blending='additive', colormap='red')
+# viewer.add_image(img_centromere_bg_corrected, blending='additive', colormap='red')
 viewer.add_image(img_nuclear_seg_convex, blending='additive')
-viewer.add_image(img_DNAFISH_seg, blending='additive')
-napari.run()
+plt.imsave('%s%s_nuclei.tiff' % (save_path, sample), dis.blending(viewer))
+viewer.close()
+
+viewer1 = napari.Viewer()
+viewer1.add_image(img_nuclear_bg_corrected, blending='additive', colormap='blue')
+viewer1.add_image(img_DNAFISH_bg_corrected, blending='additive', colormap='green')
+viewer1.add_image(img_DNAFISH_seg, blending='additive')
+plt.imsave('%s%s_DNAFISH.tiff' % (save_path, sample), dis.blending(viewer1))
+viewer1.close()
+
+viewer2 = napari.Viewer()
+viewer2.add_image(img_nuclear_bg_corrected, blending='additive', colormap='blue')
+viewer2.add_image(img_DNAFISH_bg_corrected, blending='additive', colormap='green')
+plt.imsave('%s%s_img.tiff' % (save_path, sample), dis.blending(viewer2))
+viewer2.close()
+
+viewer3 = napari.Viewer()
+viewer3.add_image(img_nuclear_seg_convex, blending='additive', colormap='blue')
+viewer3.add_image(img_DNAFISH_seg, blending='additive', colormap='green')
+plt.imsave('%s%s_seg.tiff' % (save_path, sample), dis.blending(viewer3))
+viewer3.close()
+
+print("DONE!")
