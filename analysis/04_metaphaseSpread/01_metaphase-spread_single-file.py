@@ -1,19 +1,16 @@
 from skimage.filters import threshold_local, sobel
-from skimage.morphology import binary_dilation, binary_erosion, dilation
+from skimage.morphology import binary_dilation, binary_erosion, dilation, extrema
 from skimage.measure import label, regionprops
-import shared.objects as obj
 from skimage.segmentation import watershed
 import shared.segmentation as seg
 import skimage.io as skio
-from skimage.morphology import extrema
-import shared.image as ima
 from scipy import ndimage
 import napari
-import shared.display as dis
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
+import shared.metaphaseSpreadUtilities as uti
 
 # INPUT PARAMETERS
 # file info
@@ -24,9 +21,9 @@ start_fov = 1
 total_fov = 6
 mode = 'DM_only'  # accept 'call_HSR' or 'DM_only'
 
-###############################################
-# ####  PLEASE DO NOT CHANGE BELOW HERE  #### #
-###############################################
+#####################################################################
+# ####  PLEASE DO NOT CHANGE BELOW HERE OTHER THAN FILE FORMAT #### #
+#####################################################################
 
 # PARAMETERS
 end_fov = total_fov + 1 - start_fov
@@ -44,10 +41,11 @@ else:
 # load images
 nuclear = 0
 for f in range(end_fov):
+    file_format = 'Image %s' % fov
     fov = f + start_fov
     print(fov)
-    img_hoechst = skio.imread("%s%s/Image %s_RAW_ch00 copy.tif" % (master_folder, sample, fov), plugin="tifffile")
-    img_FISH = skio.imread("%s%s/Image %s_RAW_ch01 copy.tif" % (master_folder, sample, fov), plugin="tifffile")
+    img_hoechst = skio.imread("%s%s/%s_RAW_ch00.tif" % (master_folder, sample, file_format), plugin="tifffile")
+    img_FISH = skio.imread("%s%s/%s_RAW_ch01.tif" % (master_folder, sample, file_format), plugin="tifffile")
 
     viewer = napari.Viewer()
     viewer.add_image(img_hoechst, blending='additive', colormap='blue', contrast_limits=[0, img_hoechst.max()])
@@ -87,9 +85,9 @@ for f in range(end_fov):
         local_hoechst = threshold_local(cell_hoechst, 71)  # original 31 for Aarohi
         chromosome_seg = cell_hoechst_mask > local_hoechst
         chromosome_seg = binary_erosion(chromosome_seg)
-        chromosome_seg = obj.remove_large(chromosome_seg, 10000)  # original 5000 for Aarohi
+        chromosome_seg = uti.remove_large(chromosome_seg, 10000)  # original 5000 for Aarohi
         chromosome_seg = binary_erosion(chromosome_seg)
-        chromosome_seg = obj.remove_small(chromosome_seg, 100)
+        chromosome_seg = uti.remove_small(chromosome_seg, 100)
         chromosome_seg = ndimage.binary_fill_holes(chromosome_seg)
 
         # *** filter chromosome segmentation ***
@@ -126,7 +124,7 @@ for f in range(end_fov):
         markers[cell_FISH_mask < (FISH_max / 2)] = 1
         markers[maxima == 1] = 2
         FISH_seg_large = watershed(elevation_map, markers)
-        FISH_seg_large_label = obj.label_remove_small(label(FISH_seg_large), 150)
+        FISH_seg_large_label = uti.label_remove_small(label(FISH_seg_large), 150)
         FISH_seg_large = np.zeros_like(cell_FISH_mask)
         FISH_seg_large[FISH_seg_large_label > 1] = 1
         # adjust FISH_max for images containing large FISH signal
@@ -137,14 +135,14 @@ for f in range(end_fov):
         markers[cell_FISH_mask < (FISH_max / 2)] = 1
         markers[maxima == 1] = 2
         FISH_seg_highInt = watershed(elevation_map, markers)
-        FISH_seg_highInt_label = obj.label_resort(obj.label_remove_small(label(FISH_seg_highInt), 2))
+        FISH_seg_highInt_label = uti.label_resort(uti.label_remove_small(label(FISH_seg_highInt), 2))
         # identify low intensity regions (outside chromosome)
         markers = np.zeros_like(cell_FISH_mask)
         markers[cell_FISH_mask < (FISH_max / 5)] = 1  # 2500
         markers[maxima_outside_chromosome == 1] = 2
         FISH_seg_outsideChromosome = watershed(elevation_map, markers)
-        FISH_seg_outsideChromosome_label = obj.label_remove_small(label(FISH_seg_outsideChromosome), 2)
-        FISH_seg_outsideChromosome_label = obj.label_remove_large(FISH_seg_outsideChromosome_label, 100)
+        FISH_seg_outsideChromosome_label = uti.label_remove_small(label(FISH_seg_outsideChromosome), 2)
+        FISH_seg_outsideChromosome_label = uti.label_remove_large(FISH_seg_outsideChromosome_label, 100)
         # generate total FISH segmentation
         FISH_seg_total = np.zeros_like(cell_FISH_mask)
         FISH_seg_total[FISH_seg_highInt_label > 1] = 1
@@ -204,14 +202,14 @@ for f in range(end_fov):
         shapes_HSR_add = viewer.add_shapes(name='HSR to be added', ndim=2)
         napari.run()
 
-        FISH_seg_DM, FISH_seg_HSR = ima.napari_change_between_masks(shapes_DM_to_HSR.data, FISH_seg_DM,
+        FISH_seg_DM, FISH_seg_HSR = uti.napari_change_between_masks(shapes_DM_to_HSR.data, FISH_seg_DM,
                                                                     FISH_seg_HSR)
-        FISH_seg_HSR, FISH_seg_DM = ima.napari_change_between_masks(shapes_HSR_to_DM.data, FISH_seg_HSR,
+        FISH_seg_HSR, FISH_seg_DM = uti.napari_change_between_masks(shapes_HSR_to_DM.data, FISH_seg_HSR,
                                                                     FISH_seg_DM)
-        FISH_seg_DM = ima.napari_add_or_remove(shapes_DM_remove.data, 'remove', FISH_seg_DM)
-        FISH_seg_DM = ima.napari_add_or_remove(shapes_DM_add.data, 'add', FISH_seg_DM)
-        FISH_seg_HSR = ima.napari_add_or_remove(shapes_HSR_remove.data, 'remove', FISH_seg_HSR)
-        FISH_seg_HSR = ima.napari_add_or_remove(shapes_HSR_add.data, 'add', FISH_seg_HSR)
+        FISH_seg_DM = uti.napari_add_or_remove(shapes_DM_remove.data, 'remove', FISH_seg_DM)
+        FISH_seg_DM = uti.napari_add_or_remove(shapes_DM_add.data, 'add', FISH_seg_DM)
+        FISH_seg_HSR = uti.napari_add_or_remove(shapes_HSR_remove.data, 'remove', FISH_seg_HSR)
+        FISH_seg_HSR = uti.napari_add_or_remove(shapes_HSR_add.data, 'add', FISH_seg_HSR)
 
         # measure mean chromosome intensity on FISH channel
         chromosome_woFISH_seg = np.zeros_like(cell_FISH_mask)
@@ -249,23 +247,23 @@ for f in range(end_fov):
         viewer1 = napari.Viewer()
         viewer1.add_image(cell_hoechst_mask, blending='additive', colormap='blue', contrast_limits=[0, cell_hoechst_mask.max()])
         viewer1.add_image(cell_FISH_mask, blending='additive', colormap='green', contrast_limits=[0, cell_FISH_mask.max() * 0.8])
-        plt.imsave('%s%s_%s_%s.tiff' % (save_path, sample, fov, nuclear), dis.blending(viewer1))
+        plt.imsave('%s%s_%s_%s.tiff' % (save_path, sample, fov, nuclear), uti.blending(viewer1))
         viewer1.add_image(FISH_seg_HSR, blending='additive')
-        plt.imsave('%s%s_%s_%s_HSR.tiff' % (save_path, sample, fov, nuclear), dis.blending(viewer1))
+        plt.imsave('%s%s_%s_%s_HSR.tiff' % (save_path, sample, fov, nuclear), uti.blending(viewer1))
         viewer1.close()
 
         viewer2 = napari.Viewer()
         viewer2.add_image(cell_hoechst_mask, blending='additive', colormap='blue', contrast_limits=[0, cell_hoechst_mask.max()])
         viewer2.add_image(cell_FISH_mask, blending='additive', colormap='green', contrast_limits=[0, cell_FISH_mask.max() * 0.8])
         viewer2.add_image(FISH_seg_DM, blending='additive')
-        plt.imsave('%s%s_%s_%s_DM.tiff' % (save_path, sample, fov, nuclear), dis.blending(viewer2))
+        plt.imsave('%s%s_%s_%s_DM.tiff' % (save_path, sample, fov, nuclear), uti.blending(viewer2))
         viewer2.close()
 
         viewer3 = napari.Viewer()
         viewer3.add_image(cell_hoechst_mask, blending='additive', colormap='blue', contrast_limits=[0, cell_hoechst_mask.max()])
         viewer3.add_image(cell_FISH_mask, blending='additive', colormap='green', contrast_limits=[0, cell_FISH_mask.max() * 0.8])
         viewer3.add_image(chromosome_seg_filter, blending='additive', colormap='yellow')
-        plt.imsave('%s%s_%s_%s_chromosome.tiff' % (save_path, sample, fov, nuclear), dis.blending(viewer3))
+        plt.imsave('%s%s_%s_%s_chromosome.tiff' % (save_path, sample, fov, nuclear), uti.blending(viewer3))
         viewer3.close()
 
 print("DONE!")

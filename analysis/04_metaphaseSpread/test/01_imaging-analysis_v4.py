@@ -1,11 +1,10 @@
-from skimage.filters import threshold_local, sobel
-from skimage.morphology import binary_dilation, binary_erosion, dilation
-from skimage.measure import label, regionprops
+from skimage.filters import threshold_local, sobel, threshold_otsu
+from skimage.morphology import binary_dilation, binary_erosion, dilation, extrema, disk, erosion
+from skimage.measure import label, regionprops, regionprops_table
 import shared.objects as obj
 from skimage.segmentation import watershed
 import shared.segmentation as seg
 import skimage.io as skio
-from skimage.morphology import extrema
 import shared.image as ima
 from scipy import ndimage
 import napari
@@ -20,18 +19,10 @@ import os
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220818_Natasha_metaphase_test/"
 sample = 'test'
 save_path = "%sv1_img/%s/" % (master_folder, sample)
-start_fov = 1
-total_fov = 6
-mode = 'DM_only'  # accept 'call_HSR' or 'DM_only'
-
-###############################################
-# ####  PLEASE DO NOT CHANGE BELOW HERE  #### #
-###############################################
-
-# PARAMETERS
-end_fov = total_fov + 1 - start_fov
 if not os.path.exists(save_path):
     os.makedirs(save_path)
+start_fov = 1
+total_fov = 7 - start_fov
 
 # IMAGING ANALYSIS
 export_file = '%s%s.txt' % (save_path, sample)
@@ -40,12 +31,11 @@ if os.path.exists(export_file):
 else:
     data = pd.DataFrame(columns=['nuclear', 'FOV', 'DM_n', 'DM_ind_mean_int', 'DM_ind_area', 'DM_ind_total_int',
                                  'DM_total_int', 'DM_copy', 'HSR_n', 'HSR_ind_mean_int', 'HSR_ind_area',
-                                 'HSR_ind_total_int', 'HSR_total_int', 'DM_percentage', 'HSR_percentage'])
+                                 'HSR_ind_total_int', 'HSR_total_int', 'HSR_copy', 'DM_percentage', 'HSR_percentage'])
 # load images
 nuclear = 0
-for f in range(end_fov):
+for f in range(total_fov):
     fov = f + start_fov
-    print(fov)
     img_hoechst = skio.imread("%s%s/Image %s_RAW_ch00 copy.tif" % (master_folder, sample, fov), plugin="tifffile")
     img_FISH = skio.imread("%s%s/Image %s_RAW_ch01 copy.tif" % (master_folder, sample, fov), plugin="tifffile")
 
@@ -75,14 +65,18 @@ for f in range(end_fov):
         cell_hoechst_mask = img_hoechst[top:bottom + 1, left:right + 1] * sub_masks
         cell_FISH = img_FISH[top:bottom + 1, left:right + 1]
         cell_hoechst = img_hoechst[top:bottom + 1, left:right + 1]
-        # background measurement
+        sub_masks_erosion = np.ones_like(cell_FISH)
+        sub_masks_erosion = sub_masks_erosion * sub_masks
+        sub_masks_erosion = binary_erosion(sub_masks_erosion, disk(2))
+        # background correction
         bg_FISH = seg.get_bg_int([cell_FISH])[0]
         bg_hoechst = seg.get_bg_int([cell_hoechst])[0]
+        cell_FISH_bg_corrected = cell_FISH.astype(float) - np.ones_like(cell_FISH) * bg_FISH
+        cell_FISH_bg_corrected[cell_FISH_bg_corrected < 0] = 0
         cell_hoechst_bg_corrected = cell_hoechst.astype(float) - np.ones_like(cell_hoechst) * bg_hoechst
         cell_hoechst_bg_corrected[cell_hoechst_bg_corrected < 0] = 0
 
         # ***** chromosome segmentation *****
-
         # generate primary chromosome segmentation
         local_hoechst = threshold_local(cell_hoechst, 71)  # original 31 for Aarohi
         chromosome_seg = cell_hoechst_mask > local_hoechst
@@ -94,8 +88,7 @@ for f in range(end_fov):
 
         # *** filter chromosome segmentation ***
         # measure chromosome mean intensity (hoechst channel)
-        chromosome_mean_int_in_hoechst_bg_corrected = np.sum(cell_hoechst_bg_corrected * chromosome_seg) / np.sum(
-            chromosome_seg)
+        chromosome_mean_int_in_hoechst_bg_corrected = np.sum(cell_hoechst_bg_corrected * chromosome_seg) / np.sum(chromosome_seg)
         # erose and dilate chromosome segmentation to separate chromosome better
         chromosome_seg_erosion = binary_erosion(chromosome_seg)
         chromosome_seg_erosion = binary_erosion(chromosome_seg_erosion)
@@ -111,89 +104,117 @@ for f in range(end_fov):
 
         # ***** FISH signal segmentation *****
 
-        # measure maximum FISH intensity
+        # measure FISH intensity
         FISH_max = cell_FISH_mask.max()
-        # identify local maxima in FISH channel
-        maxima_value = 400
-        if FISH_max < 4000:
-            maxima_value = 250
+        FISH_max_bg_corrected = FISH_max - bg_FISH
+        outside_chromosome_seg = np.ones_like(cell_FISH)
+        chromosome_seg_filter_expand5 = binary_dilation(chromosome_seg_filter, disk(5))
+        chromosome_seg_filter_dilation2 = binary_dilation(chromosome_seg_filter, disk(2))
+        outside_chromosome_seg[chromosome_seg_filter_expand5 == 1] = 0
+        cell_FISH_mask_outside_chromosome = cell_FISH_mask * outside_chromosome_seg
+        FISH_max_outside_chromosome = cell_FISH_mask_outside_chromosome.max()
+        FISH_max_outside_chromosome_bg_corrected = FISH_max_outside_chromosome - bg_FISH
+        chromosome_mean_int_in_FISH_bg_corrected = np.sum(cell_FISH_bg_corrected * chromosome_seg) / np.sum(chromosome_seg)
+
+        maxima_value = int(FISH_max_outside_chromosome * 20 / bg_FISH)
+        if maxima_value > 450:
+            maxima_value = 450
         maxima = extrema.h_maxima(cell_FISH_mask, maxima_value)
-        maxima_outside_chromosome = maxima.copy()
-        maxima_outside_chromosome[chromosome_seg_filter == 1] = 0
+        maxima[sub_masks == 0] = 0
+        maxima[chromosome_seg_filter == 1] = 0
         elevation_map = sobel(cell_FISH_mask)
-        # primary screening for large FISH signal
+
+        # identify signal by watershed
         markers = np.zeros_like(cell_FISH_mask)
-        markers[cell_FISH_mask < (FISH_max / 2)] = 1
+        bg_FISH_threshold_outside_chromosome = bg_FISH * 1.2
+        if bg_FISH_threshold_outside_chromosome < (bg_FISH + FISH_max_outside_chromosome_bg_corrected/7):
+            bg_FISH_threshold_outside_chromosome = bg_FISH + FISH_max_outside_chromosome_bg_corrected/7
+        markers[cell_FISH_mask < bg_FISH_threshold_outside_chromosome] = 1  # 2500
         markers[maxima == 1] = 2
-        FISH_seg_large = watershed(elevation_map, markers)
-        FISH_seg_large_label = obj.label_remove_small(label(FISH_seg_large), 150)
-        FISH_seg_large = np.zeros_like(cell_FISH_mask)
-        FISH_seg_large[FISH_seg_large_label > 1] = 1
-        # adjust FISH_max for images containing large FISH signal
-        if FISH_seg_large.max() == 1:
-            FISH_max = FISH_max/2
-        # identify high intensity regions (mostly on the chromosome)
-        markers = np.zeros_like(cell_FISH_mask)
-        markers[cell_FISH_mask < (FISH_max / 2)] = 1
-        markers[maxima == 1] = 2
-        FISH_seg_highInt = watershed(elevation_map, markers)
-        FISH_seg_highInt_label = obj.label_resort(obj.label_remove_small(label(FISH_seg_highInt), 2))
-        # identify low intensity regions (outside chromosome)
-        markers = np.zeros_like(cell_FISH_mask)
-        markers[cell_FISH_mask < (FISH_max / 5)] = 1  # 2500
-        markers[maxima_outside_chromosome == 1] = 2
-        FISH_seg_outsideChromosome = watershed(elevation_map, markers)
-        FISH_seg_outsideChromosome_label = obj.label_remove_small(label(FISH_seg_outsideChromosome), 2)
-        FISH_seg_outsideChromosome_label = obj.label_remove_large(FISH_seg_outsideChromosome_label, 100)
+        viewer = napari.view_image(markers)
+        viewer.add_image(cell_FISH_bg_corrected)
+        napari.run()
+        FISH_seg_watershed = watershed(elevation_map, markers)
+        FISH_seg_watershed_label = obj.label_remove_small(label(FISH_seg_watershed), 2)
+        FISH_seg_watershed_label[FISH_seg_watershed_label == 1] = 0
+        FISH_seg_watershed_label = obj.label_resort(FISH_seg_watershed_label)
+        # FISH_seg_watershed_label = obj.label_resort(obj.label_remove_large(label(FISH_seg_watershed), 200))
+
+        # measure mean FISH intensity
+        FISH_seg_watershed = np.zeros_like(cell_FISH)
+        FISH_seg_watershed[FISH_seg_watershed_label > 0] = 1
+        mean_int_FISH_DNA = np.sum(cell_FISH_bg_corrected * FISH_seg_watershed) / np.sum(FISH_seg_watershed)
+
         # generate total FISH segmentation
-        FISH_seg_total = np.zeros_like(cell_FISH_mask)
-        FISH_seg_total[FISH_seg_highInt_label > 1] = 1
-        FISH_seg_total[FISH_seg_outsideChromosome_label > 1] = 1
+        FISH_seg_total_label = FISH_seg_watershed_label.copy()
+        FISH_seg_total_label[sub_masks_erosion == 0] = 0
+        FISH_seg_total_label = obj.label_resort(FISH_seg_total_label)
 
-        if mode == 'call_HSR':
-            # generate HSR segmentation
-            # filter for:
-            # 1) centroid on the chromosome &
-            # 2) area > 70 | neighbour dots (within 12) with dilation of 5 can separate chromosome
-            FISH_seg_HSR_label = label(FISH_seg_total.copy())
-            HSR_props = regionprops(FISH_seg_HSR_label)
-            FISH_seg_HSR = np.zeros_like(cell_FISH_mask)
-            for j in range(len(HSR_props)):
-                if chromosome_seg_filter[int(HSR_props[j].centroid[0])][int(HSR_props[j].centroid[1])] == 1:
-                    if HSR_props[j].area > 70:
+        # filter FISH_seg
+        # FISH_seg_total_label_filter = FISH_seg_total_label.copy()
+        FISH_seg_total_label_filter = np.zeros_like(FISH_seg_total_label)
+        count = 1
+        FISH_seg_total_label_edge = dilation(FISH_seg_total_label, disk(7))
+        FISH_seg_total_label_edge[FISH_seg_total_label > 0] = 0
+        viewer = napari.view_image(FISH_seg_total_label)
+        viewer.add_image(FISH_seg_total_label_edge)
+        napari.run()
+        FISH_seg_total_props_table = pd.DataFrame(regionprops_table(FISH_seg_total_label, cell_FISH_bg_corrected,
+                                                                    properties=['label', 'intensity_mean']))
+        FISH_seg_total_edge_props_table = pd.DataFrame(regionprops_table(FISH_seg_total_label_edge, cell_FISH_bg_corrected,
+                                                                         properties=['label', 'intensity_mean']))
+        print(len(FISH_seg_total_props_table))
+        print(len(FISH_seg_total_edge_props_table))
+
+        for j_edge in range(FISH_seg_total_label_edge.max()):
+            common_label = FISH_seg_total_edge_props_table['label'].tolist()[j_edge]
+            j = FISH_seg_total_props_table[FISH_seg_total_props_table['label'] == common_label].index.tolist()[0]
+            mean_int_j = FISH_seg_total_props_table['intensity_mean'].tolist()[j]
+            mean_int_j_edge = FISH_seg_total_edge_props_table['intensity_mean'].tolist()[j_edge]
+            if (mean_int_j > (mean_int_FISH_DNA * 0.5)) & (mean_int_j > (mean_int_j_edge * 1.5)):
+                FISH_seg_total_label_filter[FISH_seg_total_label == common_label] = count
+                count = count + 1
+
+        FISH_seg_total = np.zeros_like(cell_FISH)
+        FISH_seg_total[FISH_seg_total_label_filter > 0] = 1
+
+        # generate HSR segmentation
+        # filter for:
+        # 1) centroid on the chromosome &
+        # 2) area > 70 | neighbour dots (within 13) with dilation of 5 can separate chromosome
+        FISH_seg_HSR_label = label(FISH_seg_total_label_filter.copy())
+        HSR_props = regionprops(FISH_seg_HSR_label, cell_FISH_bg_corrected)
+        FISH_seg_HSR = np.zeros_like(cell_FISH_mask)
+        for j in range(len(HSR_props)):
+            if chromosome_seg_filter[int(HSR_props[j].centroid[0])][int(HSR_props[j].centroid[1])] == 1:
+                if (HSR_props[j].area > 70) | (HSR_props[j].intensity_mean > mean_int_FISH_DNA * 3):
+                    FISH_seg_HSR[FISH_seg_HSR_label == HSR_props[j].label] = 1
+                else:
+                    FISH_seg_small_temp = np.zeros_like(cell_FISH_mask)
+                    FISH_seg_small_temp[FISH_seg_HSR_label == HSR_props[j].label] = 1
+                    centroid = HSR_props[j].centroid
+                    for k in range(len(HSR_props)):
+                        centroid_distance = ((HSR_props[k].centroid[0] - centroid[0]) ** 2
+                                             + (HSR_props[k].centroid[1] - centroid[1]) ** 2) ** 0.5
+                        if centroid_distance < 13:
+                            FISH_seg_small_temp[FISH_seg_HSR_label == HSR_props[k].label] = 1
+                    for k in range(5):
+                        FISH_seg_small_temp = binary_dilation(FISH_seg_small_temp)
+                    chromosome_seg_wo_temp = chromosome_seg_filter.copy()
+                    chromosome_seg_wo_temp[FISH_seg_small_temp == 1] = 0
+                    if len(regionprops(label(chromosome_seg_filter))) + 1 == \
+                            len(regionprops(label(chromosome_seg_wo_temp))):
                         FISH_seg_HSR[FISH_seg_HSR_label == HSR_props[j].label] = 1
-                    else:
-                        FISH_seg_small_temp = np.zeros_like(cell_FISH_mask)
-                        FISH_seg_small_temp[FISH_seg_HSR_label == HSR_props[j].label] = 1
-                        centroid = HSR_props[j].centroid
-                        for k in range(len(HSR_props)):
-                            centroid_distance = ((HSR_props[k].centroid[0] - centroid[0]) ** 2
-                                                 + (HSR_props[k].centroid[1] - centroid[1]) ** 2) ** 0.5
-                            if centroid_distance < 12:
-                                FISH_seg_small_temp[FISH_seg_HSR_label == HSR_props[k].label] = 1
-                        for k in range(5):
-                            FISH_seg_small_temp = binary_dilation(FISH_seg_small_temp)
-                        chromosome_seg_wo_temp = chromosome_seg_filter.copy()
-                        chromosome_seg_wo_temp[FISH_seg_small_temp == 1] = 0
-                        if len(regionprops(label(chromosome_seg_filter))) + 1 == \
-                                len(regionprops(label(chromosome_seg_wo_temp))):
-                            FISH_seg_HSR[FISH_seg_HSR_label == HSR_props[j].label] = 1
 
-            # generate DM segmentation
-            FISH_seg_DM = np.zeros_like(cell_FISH_mask)
-            FISH_seg_DM = FISH_seg_total.copy()
-            FISH_seg_DM[FISH_seg_HSR == 1] = 0
-
-        elif mode == 'DM_only':
-            FISH_seg_DM = FISH_seg_total.copy()
-            FISH_seg_HSR = np.zeros_like(FISH_seg_DM)
+        # generate DM segmentation
+        FISH_seg_DM = np.zeros_like(cell_FISH_mask)
+        FISH_seg_DM = FISH_seg_total.copy()
+        FISH_seg_DM[FISH_seg_HSR == 1] = 0
 
         # manuel correction of DM and HSR
         viewer = napari.Viewer()
-        viewer.add_image(cell_hoechst_mask, blending='additive', colormap='blue',
-                         contrast_limits=[0, cell_hoechst_mask.max()])
-        viewer.add_image(cell_FISH_mask, blending='additive', colormap='green',
-                         contrast_limits=[0, cell_FISH_mask.max() * 0.8])
+        viewer.add_image(cell_hoechst_mask, blending='additive', colormap='blue', contrast_limits=[0, cell_hoechst_mask.max()])
+        viewer.add_image(cell_FISH_mask, blending='additive', colormap='green', contrast_limits=[0, cell_FISH_mask.max() * 0.8])
         viewer.add_image(FISH_seg_DM, blending='additive')
         viewer.add_image(FISH_seg_HSR, blending='additive')
         shapes_DM_to_HSR = viewer.add_shapes(name='change DM to HSR', ndim=2)
@@ -204,27 +225,12 @@ for f in range(end_fov):
         shapes_HSR_add = viewer.add_shapes(name='HSR to be added', ndim=2)
         napari.run()
 
-        FISH_seg_DM, FISH_seg_HSR = ima.napari_change_between_masks(shapes_DM_to_HSR.data, FISH_seg_DM,
-                                                                    FISH_seg_HSR)
-        FISH_seg_HSR, FISH_seg_DM = ima.napari_change_between_masks(shapes_HSR_to_DM.data, FISH_seg_HSR,
-                                                                    FISH_seg_DM)
+        FISH_seg_DM, FISH_seg_HSR = ima.napari_change_between_masks(shapes_DM_to_HSR.data, FISH_seg_DM, FISH_seg_HSR)
+        FISH_seg_HSR, FISH_seg_DM = ima.napari_change_between_masks(shapes_HSR_to_DM.data, FISH_seg_HSR, FISH_seg_DM)
         FISH_seg_DM = ima.napari_add_or_remove(shapes_DM_remove.data, 'remove', FISH_seg_DM)
         FISH_seg_DM = ima.napari_add_or_remove(shapes_DM_add.data, 'add', FISH_seg_DM)
         FISH_seg_HSR = ima.napari_add_or_remove(shapes_HSR_remove.data, 'remove', FISH_seg_HSR)
         FISH_seg_HSR = ima.napari_add_or_remove(shapes_HSR_add.data, 'add', FISH_seg_HSR)
-
-        # measure mean chromosome intensity on FISH channel
-        chromosome_woFISH_seg = np.zeros_like(cell_FISH_mask)
-        chromosome_woFISH_seg = chromosome_seg_filter.copy()
-        chromosome_woFISH_seg[FISH_seg_HSR == 1] = 0
-        chromosome_bg_in_FISH = np.sum(cell_FISH_mask * chromosome_woFISH_seg) / np.sum(chromosome_woFISH_seg)
-        # generate bg corrected FISH image
-        cell_FISH_bg_corrected = np.zeros_like(cell_FISH_mask)
-        cell_FISH_bg_corrected = cell_FISH_mask.copy().astype(float) \
-                                 - (chromosome_seg_filter * (chromosome_bg_in_FISH - bg_FISH)) \
-                                 - (np.ones_like(cell_FISH_mask) * bg_FISH)
-        cell_FISH_bg_corrected[cell_FISH_bg_corrected < 0] = 0
-        cell_FISH_bg_corrected = cell_FISH_bg_corrected.astype(int)
 
         # measure HSR and DM properties
         HSR_props = regionprops(label(FISH_seg_HSR), cell_FISH_bg_corrected)
@@ -237,13 +243,18 @@ for f in range(end_fov):
         DM_ind_area = [DM_props[i].area for i in range(len(DM_props))]
         DM_ind_total_int = [DM_props[i].intensity_mean * DM_props[i].area for i in range(len(DM_props))]
         DM_total_int = sum(DM_ind_total_int)
+
         DM_copy = len(DM_props)
+        if DM_total_int != 0:
+            HSR_copy = int(HSR_total_int * DM_copy / DM_total_int)
+        else:
+            HSR_copy = -1
         DM_percentage = DM_total_int / (DM_total_int + HSR_total_int)
         HSR_percentage = HSR_total_int / (DM_total_int + HSR_total_int)
 
         data.loc[len(data.index)] = [nuclear, fov, len(DM_props), DM_ind_mean_int, DM_ind_area, DM_ind_total_int,
                                      DM_total_int, DM_copy, len(HSR_props), HSR_ind_mean_int, HSR_ind_area,
-                                     HSR_ind_total_int, HSR_total_int, DM_percentage, HSR_percentage]
+                                     HSR_ind_total_int, HSR_total_int, HSR_copy, DM_percentage, HSR_percentage]
         data.to_csv('%s%s.txt' % (save_path, sample), index=False, sep='\t')
 
         viewer1 = napari.Viewer()
