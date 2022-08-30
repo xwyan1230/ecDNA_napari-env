@@ -59,8 +59,12 @@ plt.savefig('%s/%s_DM_copy.pdf' % (save_folder, sample))
 plt.close()
 
 sns.displot(data_DM, x="DM_copy", kde=True)
-plt.savefig('%s/DM_copy_kde.pdf' % save_folder)
+plt.savefig('%s/%s_DM_copy_kde.pdf' % (save_folder, sample))
 plt.close()
+
+features = ['DM_ind_area', 'DM_ind_mean_int', 'DM_ind_total_int', 'HSR_ind_area', 'HSR_ind_mean_int', 'HSR_ind_total_int']
+for f in features:
+    data[f] = [dat.str_to_float(data[f][i]) for i in range(len(data))]
 
 data_area_ind_DM = dat.list_addup_from_df(data, 'DM_ind_area')
 data_mean_int_ind_DM = dat.list_addup_from_df(data, 'DM_ind_mean_int')
@@ -68,5 +72,6 @@ data_total_int_ind_DM = dat.list_addup_from_df(data, 'DM_ind_total_int')
 data_area_ind_HSR = dat.list_addup_from_df(data, 'HSR_ind_area')
 data_mean_int_ind_HSR = dat.list_addup_from_df(data, 'HSR_ind_mean_int')
 data_total_int_ind_HSR = dat.list_addup_from_df(data, 'HSR_ind_total_int')
+
 
 print("DONE!")
