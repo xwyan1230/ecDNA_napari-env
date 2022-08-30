@@ -12,16 +12,12 @@ import napari
 
 # INPUT PARAMETERS
 # file info
-master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220722_Natasha_ColoDM_Jun/"
-sample = 'ARV825'
+master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220816_Natasha_ColoDM_reimage/"
+master_folder = '/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220825_POLR3D/20220825_POLR3Dtest/'
+sample = 'Control_1'
 master_path = '%s%s/' % (master_folder, sample)
-raw_folder = 'TileScan 1'
-save_folder = '02_seg'
-save_path = '%s%s/' % (master_path, save_folder)
-if not os.path.exists(save_path):
-    os.makedirs(save_path)
-total_fov = 50
-start_fov = 1
+total_fov = 10
+start_fov = 3
 # cell info
 pixel_size = 102  # nm (sp8 confocal 3144x3144:58.7, Paul scope 2048x2048:102)
 cell_avg_size = 10  # um (Colo)
@@ -42,22 +38,21 @@ data = pd.DataFrame(columns=['FOV',
 # IMAGING ANALYSIS
 for f in range(total_fov):
     fov = f + start_fov
-    print("Start nuclear segmentation FOV %s/%s" % (fov, total_fov))
-    file_prefix = "%s_Position %s_RAW" % (raw_folder, fov)
+    print("Analyzing %s, start nuclear segmentation FOV %s/%s" % (sample, f+1, total_fov))
+    file_prefix = "%s_Position %s_RAW" % (sample, fov)
     # LOAD IMAGE
     """im_z_stack_nuclear = img.img_to_int(skio.imread("%s%s/%s_ch00.tif" % (master_path, raw_folder, file_prefix),
                                                     plugin="tifffile"))
 
     im_z_stack_DNAFISH = img.img_to_int(skio.imread("%s%s/%s_ch01.tif" % (master_path, raw_folder, file_prefix),
                                                     plugin="tifffile"))"""
-    im_z_stack_nuclear = skio.imread("%s%s/%s_ch00.tif" % (master_path, raw_folder, file_prefix), plugin="tifffile")
-    im_z_stack_DNAFISH = skio.imread("%s%s/%s_ch01.tif" % (master_path, raw_folder, file_prefix), plugin="tifffile")
+    im_z_stack_nuclear = skio.imread("%s%s_ch00.tif" % (master_path, file_prefix), plugin="tifffile")
+    im_z_stack_DNAFISH = skio.imread("%s%s_ch01.tif" % (master_path, file_prefix), plugin="tifffile")
 
     total_z = im_z_stack_nuclear.shape[0]
 
     # Perform nuclear segmentation
-    im_z_stack_nuclear_seg_convex = np.zeros(shape=(im_z_stack_nuclear.shape[0], im_z_stack_nuclear.shape[1],
-                                                    im_z_stack_nuclear.shape[2]), dtype=np.uint16)
+    im_z_stack_nuclear_seg_convex = np.zeros(shape=im_z_stack_nuclear.shape, dtype=np.uint16)
     for z in range(total_z):
         img_nuclear_seg = seg.nuclear_seg(im_z_stack_nuclear[z], local_factor=local_factor_nuclear,
                                           min_size=min_size_nuclear, max_size=max_size_nuclear)
@@ -74,9 +69,8 @@ for f in range(total_fov):
             FISH_mean_intensity_nuclear = DNAFISH_props[i].mean_intensity
             data.loc[len(data.index)] = [fov, z, label_nuclear, centroid_nuclear, FISH_mean_intensity_nuclear]
 
-    tif.imwrite('%s%s/%s_seg_fov%s.tif' % (master_path, save_folder, sample, fov),
-                im_z_stack_nuclear_seg_convex)
+    tif.imwrite('%s%s_seg.tif' % (master_path, file_prefix), im_z_stack_nuclear_seg_convex)
 
-data.to_csv('%s%s_centroids.txt' % (master_path, sample), index=False, sep='\t')
+data.to_csv('%s%s_centroids.txt' % (master_folder, sample), index=False, sep='\t')
 
 print("DONE!")

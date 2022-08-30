@@ -8,19 +8,18 @@ import napari
 
 # INPUT PARAMETERS
 # file info
-master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220722_Natasha_ColoDM_Jun/"
-sample = 'triptolide'
+# master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220816_Natasha_ColoDM_reimage/"
+master_folder = '/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220825_POLR3D/20220825_POLR3Dtest/'
+sample = 'Control_2'
 master_path = '%s%s/' % (master_folder, sample)
-raw_folder = 'TileScan 1'
-seg_folder = '02_seg'
-total_fov = 50
+total_fov = 10
 start_fov = 1
 # centroid searching
 nuclear_centroid_searching_range = 25  # pixel
 local_size = 100
 
 # LOAD CENTROIDS FILE
-data_c = pd.read_csv('%s%s_centroids.txt' % (master_path, sample), na_values=['.'], sep='\t')
+data_c = pd.read_csv('%s%s_centroids.txt' % (master_folder, sample), na_values=['.'], sep='\t')
 data_c['centroid_nuclear'] = [dat.str_to_float(data_c['centroid_nuclear'][i]) for i in range(len(data_c))]
 data_c['centroid_x'] = [data_c['centroid_nuclear'][i][0] for i in range(len(data_c))]
 data_c['centroid_y'] = [data_c['centroid_nuclear'][i][1] for i in range(len(data_c))]
@@ -34,8 +33,8 @@ n_nuclear = pd.DataFrame(columns=['sample', 'FOV', 'total', 'fov_skipped', 'surr
 # IMAGING ANALYSIS
 for f in range(total_fov):
     fov = f + start_fov
-    print("Start nuclear analysis FOV %s/%s" % (fov, total_fov))
-    file_prefix = "%s_Position %s_RAW" % (raw_folder, fov)
+    print("Analyzing %s, start nuclear analysis FOV %s/%s" % (sample, f+1, total_fov))
+    file_prefix = "%s_Position %s_RAW" % (sample, fov)
     duplicate_z = 0
     discontinue_z = 0
     fewer_z = 0
@@ -47,12 +46,11 @@ for f in range(total_fov):
 
         im_z_stack_DNAFISH = img.img_to_int(skio.imread("%s%s/%s_ch01.tif" % (master_path, raw_folder, file_prefix),
                                                         plugin="tifffile"))"""
-    im_z_stack_nuclear = skio.imread("%s%s/%s_ch00.tif" % (master_path, raw_folder, file_prefix), plugin="tifffile")
-    im_z_stack_DNAFISH = skio.imread("%s%s/%s_ch01.tif" % (master_path, raw_folder, file_prefix), plugin="tifffile")
+    im_z_stack_nuclear = skio.imread("%s%s_ch00.tif" % (master_path, file_prefix), plugin="tifffile")
+    im_z_stack_DNAFISH = skio.imread("%s%s_ch01.tif" % (master_path, file_prefix), plugin="tifffile")
 
     total_z = im_z_stack_nuclear.shape[0]
-    im_z_stack_seg_convex = skio.imread("%s%s/%s_seg_fov%s.tif" % (master_path, seg_folder, sample, fov),
-                                        plugin="tifffile")
+    im_z_stack_seg_convex = skio.imread("%s%s_seg.tif" % (master_path, file_prefix), plugin="tifffile")
     # identify z for given fov
     data_c_fov = data_c[data_c['FOV'] == fov]
     z_analyze = int(total_z/2)
@@ -143,7 +141,7 @@ for f in range(total_fov):
         n_nuclear.loc[len(n_nuclear)] = [sample, fov, n_nuclear_fov, 1, surrounding_z, duplicate_z, discontinue_z,
                                          fewer_z, filtered_total]
 
-data.to_csv('%s%s_z.txt' % (master_path, sample), index=False, sep='\t')
-n_nuclear.to_csv('%s%s_n_nuclear.txt' % (master_path, sample), index=False, sep='\t')
+data.to_csv('%s%s_z.txt' % (master_folder, sample), index=False, sep='\t')
+n_nuclear.to_csv('%s%s_n_nuclear.txt' % (master_folder, sample), index=False, sep='\t')
 
 print("DONE!")

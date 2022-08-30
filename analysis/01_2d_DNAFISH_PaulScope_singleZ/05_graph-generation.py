@@ -14,34 +14,33 @@ import os
 
 # INPUT PARAMETERS
 # file info
-master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220722_Natasha_ColoDM_Jun/"
-sample = 'triptolide'
-sample_prefix = ''
-save_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220722_Natasha_ColoDM_Jun/v1_figures/%s/" % sample
+# master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220816_Natasha_ColoDM_reimage/"
+master_folder = '/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220825_POLR3D/20220825_POLR3Dtest/'
+sample = 'KO'
+version = 1
+save_folder = "%sv1_fig/%s_WT-Control_1/" % (master_folder, sample)
 if not os.path.exists(save_folder):
     os.makedirs(save_folder)
 
 # default setting
-control = ['DMSO_R2']
-WT = ['DMSO_R2']
+control = ['Control_2']
+WT = ['Control_1']
 hist_colors = [(0.95, 0.50, 0.50), (0.90, 0.90, 0.90), (0.50, 0.90, 0.90)]
 line_colors = [(0.85, 0.35, 0.25), (0.30, 0.30, 0.30), (0.30, 0.70, 0.70)]
 line_color_4 = [(0.85, 0.35, 0.25), (0.30, 0.30, 0.30), (0.30, 0.70, 0.70), (0.95, 0.85, 0)]
 # '#FFA500', '#40E0D0', '#DA70D6', '#00CED1'
 feature = ['radial_curve_DNAFISH', 'radial_curve_nuclear', 'angle_curve_DNAFISH', 'angle_curve_nuclear',
-           'area_individual_ecDNA', 'area_ratio_individual_ecDNA', 'mean_int_individual_ecDNA',
-           'mean_int_individual_ecDNA_norm', 'total_int_individual_ecDNA', 'total_int_individual_ecDNA_norm',
+           'area_ind_ecDNA', 'area_ratio_ind_ecDNA', 'mean_int_ind_ecDNA', 'total_int_ind_ecDNA',
            'percentage_area_curve_ecDNA', 'percentage_area_ratio_curve_ecDNA', 'percentage_int_curve_ecDNA',
-           'percentage_int_curve_ecDNA_norm', 'cum_area_ind_ecDNA', 'cum_area_ind_ecDNA_filled',
+           'cum_area_ind_ecDNA', 'cum_area_ind_ecDNA_filled',
            'cum_area_ratio_ind_ecDNA', 'cum_area_ratio_ind_ecDNA_filled', 'cum_int_ind_ecDNA',
-           'cum_int_ind_ecDNA_filled', 'cum_int_ind_ecDNA_norm', 'cum_int_ind_ecDNA_norm_filled',
-           'angle_curve_DNAFISH_bg_correct', 'radial_curve_DNAFISH_bg_correct', 'g']
+           'cum_int_ind_ecDNA_filled', 'g']
 
 # LOAD FILE
-data_sample = pd.read_csv('%s%s%s/%s.txt' % (master_folder, sample_prefix, sample, sample), na_values=['.'], sep='\t')
-data_control1 = pd.read_csv('%s%s%s/%s.txt' % (master_folder, sample_prefix, control[0], control[0]),
+data_sample = pd.read_csv('%s%s_v%s.txt' % (master_folder, sample, version), na_values=['.'], sep='\t')
+data_control1 = pd.read_csv('%s%s_v%s.txt' % (master_folder, control[0], version),
                             na_values=['.'], sep='\t')
-data_WT = pd.read_csv('%s%s%s/%s.txt' % (master_folder, sample_prefix, WT[0], WT[0]), na_values=['.'], sep='\t')
+data_WT = pd.read_csv('%s%s_v%s.txt' % (master_folder, WT[0], version), na_values=['.'], sep='\t')
 
 data_sample['sample'] = [sample] * len(data_sample)
 data_control1['sample'] = [control[0]] * len(data_control1)
@@ -56,27 +55,23 @@ for f in feature:
     data_WT[f] = [dat.str_to_float(data_WT[f][i]) for i in range(len(data_WT))]
 
 # calculate
-data_sample_area_ind_ecDNA = dat.list_addup_from_df(data_sample, 'area_individual_ecDNA')
-data_control1_area_ind_ecDNA = dat.list_addup_from_df(data_control1, 'area_individual_ecDNA')
-data_WT_area_ind_ecDNA = dat.list_addup_from_df(data_WT, 'area_individual_ecDNA')
+data_sample_area_ind_ecDNA = dat.list_addup_from_df(data_sample, 'area_ind_ecDNA')
+data_control1_area_ind_ecDNA = dat.list_addup_from_df(data_control1, 'area_ind_ecDNA')
+data_WT_area_ind_ecDNA = dat.list_addup_from_df(data_WT, 'area_ind_ecDNA')
 
-data_sample_mean_int_ind_ecDNA = dat.list_addup_from_df(data_sample, 'mean_int_individual_ecDNA')
-data_control1_mean_int_ind_ecDNA = dat.list_addup_from_df(data_control1, 'mean_int_individual_ecDNA')
-data_WT_mean_int_ind_ecDNA = dat.list_addup_from_df(data_WT, 'mean_int_individual_ecDNA')
+data_sample_mean_int_ind_ecDNA = dat.list_addup_from_df(data_sample, 'mean_int_ind_ecDNA')
+data_control1_mean_int_ind_ecDNA = dat.list_addup_from_df(data_control1, 'mean_int_ind_ecDNA')
+data_WT_mean_int_ind_ecDNA = dat.list_addup_from_df(data_WT, 'mean_int_ind_ecDNA')
 
-data_sample_area_ratio_ind_ecDNA = dat.list_addup_from_df(data_sample, 'area_ratio_individual_ecDNA')
-data_control1_area_ratio_ind_ecDNA = dat.list_addup_from_df(data_control1, 'area_ratio_individual_ecDNA')
-data_WT_area_ratio_ind_ecDNA = dat.list_addup_from_df(data_WT, 'area_ratio_individual_ecDNA')
-
-data_sample_mean_int_ind_ecDNA_norm = dat.list_addup_from_df(data_sample, 'mean_int_individual_ecDNA_norm')
-data_control1_mean_int_ind_ecDNA_norm = dat.list_addup_from_df(data_control1, 'mean_int_individual_ecDNA_norm')
-data_WT_mean_int_ind_ecDNA_norm = dat.list_addup_from_df(data_WT, 'mean_int_individual_ecDNA_norm')
+data_sample_area_ratio_ind_ecDNA = dat.list_addup_from_df(data_sample, 'area_ratio_ind_ecDNA')
+data_control1_area_ratio_ind_ecDNA = dat.list_addup_from_df(data_control1, 'area_ratio_ind_ecDNA')
+data_WT_area_ratio_ind_ecDNA = dat.list_addup_from_df(data_WT, 'area_ratio_ind_ecDNA')
 
 # normalize dataset
 data = pd.concat([data_sample, data_WT, data_control1], axis=0, ignore_index=True)
 data_feature = data.copy()
 all_feature = data.columns
-feature = ['mean_int_ecDNA_norm', 'area_ratio_ecDNA', 'radial_center', 'relative_r_area', 'n_ecDNA',
+feature = ['mean_int_ecDNA', 'area_ratio_ecDNA', 'radial_center', 'relative_r_area', 'n_ecDNA',
            'cum_area_ratio_n_half', 'dis_to_hub_area']
 drop_feature = [i for i in all_feature if i not in feature]
 data_feature = data_feature.drop(drop_feature, axis=1)
@@ -140,15 +135,14 @@ plt.close()
 
 # single value feature
 print("Plotting single value feature...")
-feature = ['z_ratio', 'limit', 'area_nuclear', 'mean_int_DNAFISH', 'mean_int_DNAFISH_norm', 'mean_int_nuclear',
-           'total_int_DNAFISH', 'total_int_DNAFISH_norm', 'g_value', 'angle_value',
-           'total_int_nuclear', 'radial_center', 'radial_edge', 'total_area_ecDNA', 'area_ratio_ecDNA',
-           'mean_int_ecDNA', 'mean_int_ecDNA_norm', 'total_int_ecDNA', 'total_int_ecDNA_norm', 'area_ratio_ecDNA',
+feature = ['z_ratio', 'limit', 'area_nuclear', 'mean_int_DNAFISH', 'mean_int_nuclear',
+           'total_int_DNAFISH', 'g_value', 'angle_value',
+           'total_int_nuclear', 'radial_center', 'radial_edge', 'total_area_ecDNA', 'total_area_ratio_ecDNA',
+           'mean_int_ecDNA', 'total_int_ecDNA',
            'max_area_ecDNA', 'max_area_ratio_ecDNA', 'n_ecDNA', 'percentage_area_n_half',
-           'percentage_area_ratio_n_half', 'percentage_int_n_half', 'percentage_int_norm_n_half', 'cum_area_n_half',
-           'cum_area_ratio_n_half', 'cum_int_n_half', 'cum_int_norm_n_half', 'bg_int',
-           'dis_to_hub_area', 'dis_to_hub_int', 'dis_to_hub_int_norm', 'relative_r_area', 'relative_r_int',
-           'relative_r_int_norm']
+           'percentage_area_ratio_n_half', 'percentage_int_n_half', 'cum_area_n_half',
+           'cum_area_ratio_n_half', 'cum_int_n_half',
+           'dis_to_hub_area', 'dis_to_hub_int', 'relative_r_area', 'relative_r_int']
 
 for i in feature:
     f = i
@@ -175,24 +169,21 @@ print("Plotting multiple value feature...")
 data_m_sample = pd.DataFrame({'area_ind_ecDNA_m': data_sample_area_ind_ecDNA,
                               'area_ratio_ind_ecDNA_m': data_sample_area_ratio_ind_ecDNA,
                               'mean_int_ind_ecDNA_m': data_sample_mean_int_ind_ecDNA,
-                              'mean_int_ind_ecDNA_norm_m': data_sample_mean_int_ind_ecDNA_norm,
                               'sample': [sample]*len(data_sample_area_ind_ecDNA)})
 data_m_control1 = pd.DataFrame({'area_ind_ecDNA_m': data_control1_area_ind_ecDNA,
                                 'area_ratio_ind_ecDNA_m': data_control1_area_ratio_ind_ecDNA,
                                 'mean_int_ind_ecDNA_m': data_control1_mean_int_ind_ecDNA,
-                                'mean_int_ind_ecDNA_norm_m': data_control1_mean_int_ind_ecDNA_norm,
                                 'sample': [control[0]]*len(data_control1_area_ind_ecDNA)})
 data_m_WT = pd.DataFrame({'area_ind_ecDNA_m': data_WT_area_ind_ecDNA,
                           'area_ratio_ind_ecDNA_m': data_WT_area_ratio_ind_ecDNA,
                           'mean_int_ind_ecDNA_m': data_WT_mean_int_ind_ecDNA,
-                          'mean_int_ind_ecDNA_norm_m': data_WT_mean_int_ind_ecDNA_norm,
                           'sample': ['WT']*len(data_WT_area_ind_ecDNA)})
 data_m_control1_select = data_m_control1[data_m_control1['area_ind_ecDNA_m'] > 100].copy()
 data_m_sample_select = data_m_sample[data_m_sample['area_ind_ecDNA_m'] > 100].copy()
 data_m_WT_select = data_m_WT[data_m_WT['area_ind_ecDNA_m'] > 100].copy()
 data_m = pd.concat([data_m_sample_select, data_m_WT_select, data_m_control1_select], axis=0, ignore_index=True)
 
-feature = ['area_ind_ecDNA_m', 'mean_int_ind_ecDNA_m', 'area_ratio_ind_ecDNA_m', 'mean_int_ind_ecDNA_norm_m']
+feature = ['area_ind_ecDNA_m', 'mean_int_ind_ecDNA_m', 'area_ratio_ind_ecDNA_m']
 for f in feature:
     plt.subplots(figsize=(6, 4))
     weights1 = np.ones_like(data_m_sample_select[f]) / len(data_m_sample_select)
@@ -213,8 +204,8 @@ for f in feature:
 
 # scatter
 print("Plotting scatter images...")
-feature_x_lst = ['mean_int_ecDNA_norm', 'total_int_ecDNA_norm', 'total_area_ecDNA', 'total_int_DNAFISH_norm']
-feature_y_lst = ['area_ratio_ecDNA', 'total_area_ecDNA']
+feature_x_lst = ['mean_int_ecDNA', 'total_int_ecDNA', 'total_area_ecDNA', 'total_int_DNAFISH']
+feature_y_lst = ['total_area_ratio_ecDNA', 'total_area_ecDNA']
 
 sns.set_palette(sns.color_palette(line_colors))
 data_part = data[(data['sample'] == sample) | (data['sample'] == 'WT')].copy()
@@ -257,7 +248,7 @@ for f in feature:
 
 # radial curve
 print("Plotting radial curve...")
-feature = ['radial_curve_DNAFISH_bg_correct']
+feature = ['radial_curve_DNAFISH']
 for f in feature:
     x = np.arange(0.01, 0.99, 0.01)
     x_label = 'relative r'
@@ -287,7 +278,7 @@ for f in feature:
 
 # angle curve
 print("Plotting angle curve...")
-feature = ['angle_curve_DNAFISH', 'angle_curve_DNAFISH_bg_correct']
+feature = ['angle_curve_DNAFISH']
 for f in feature:
     x = np.arange(0, 360, 1)
     x_label = 'degree'
@@ -317,19 +308,23 @@ for f in feature:
 
 # cumulative curve
 print("Plotting cumulative curve...")
-feature = ['cum_int_ind_ecDNA_filled', 'cum_int_ind_ecDNA_norm_filled', 'cum_area_ind_ecDNA_filled',
+feature = ['cum_int_ind_ecDNA_filled', 'cum_area_ind_ecDNA_filled',
            'cum_area_ratio_ind_ecDNA_filled', 'percentage_area_curve_ecDNA',
-           'percentage_int_curve_ecDNA', 'percentage_area_ratio_curve_ecDNA', 'percentage_int_curve_ecDNA_norm']
+           'percentage_int_curve_ecDNA', 'percentage_area_ratio_curve_ecDNA']
 for f in feature:
     x_label = 'number of ecDNA hub'
 
-    number_nuclear1 = len(data_sample)
-    number_nuclear2 = len(data_WT)
-    number_nuclear3 = len(data_control1)
+    data_sample_filter = data_sample[data_sample['n_ecDNA'] > 5].copy().reset_index()
+    data_control1_filter = data_control1[data_control1['n_ecDNA'] > 5].copy().reset_index()
+    data_WT_filter = data_WT[data_WT['n_ecDNA'] > 5].copy().reset_index()
 
-    mean_curve1, ci_lower1, ci_higher1 = dat.mean_list(dat.list_fill_with_last_num(data_sample[f].tolist()))
-    mean_curve2, ci_lower2, ci_higher2 = dat.mean_list(dat.list_fill_with_last_num(data_WT[f].tolist()))
-    mean_curve3, ci_lower3, ci_higher3 = dat.mean_list(dat.list_fill_with_last_num(data_control1[f].tolist()))
+    number_nuclear1 = len(data_sample_filter)
+    number_nuclear2 = len(data_WT_filter)
+    number_nuclear3 = len(data_control1_filter)
+
+    mean_curve1, ci_lower1, ci_higher1 = dat.mean_list(dat.list_fill_with_last_num(data_sample_filter[f].tolist()))
+    mean_curve2, ci_lower2, ci_higher2 = dat.mean_list(dat.list_fill_with_last_num(data_WT_filter[f].tolist()))
+    mean_curve3, ci_lower3, ci_higher3 = dat.mean_list(dat.list_fill_with_last_num(data_control1_filter[f].tolist()))
 
     plt.subplots(figsize=(6, 4))
     for i in range(len(data_sample)):
