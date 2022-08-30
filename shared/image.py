@@ -84,6 +84,10 @@ napari_add_or_remove
 napari_change_between_masks
     FUNCTION: manual correction by moving objects between masks based on napari shapes
     SYNTAX:   napari_change_between_masks(shape_data, change_from_mask: np.array, change_to_mask: np.array)
+
+img_background_correction
+    FUNCTION: generate background corrected image based on background intensity subtraction
+    SYNTAX:   img_background_correction(img: np.array, bg_int: float)
 """
 
 
@@ -498,4 +502,20 @@ def napari_change_between_masks(shape_data, change_from_mask: np.array, change_t
         out_from[mask == 1] = 0
 
     return out_from, out_to
+
+
+def img_background_correction(img: np.array, bg_int: float):
+    """
+    Generate background corrected image based on background intensity subtraction
+
+    :param img: np.array
+    :param bg_int: float
+    :return:
+    """
+    out = img.copy().astype(float) - np.ones_like(img) * bg_int
+    out[out < 0] = 0
+    out = out.astype(int)
+
+    return out
+
 

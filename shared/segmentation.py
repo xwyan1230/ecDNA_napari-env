@@ -68,11 +68,15 @@ obj_to_convex_filter
     
 filter_solidity
     FUNCTION: filter labeled objects based on solidity
-    SYNTAX: filter_solidity(pixels: np.array, threshold=0.9)
+    SYNTAX:   filter_solidity(pixels: np.array, threshold=0.9)
 
 filter_mean_int
     FUNCTION: filter labeled objects based on mean sub_obj intensity
-    SYNTAX: filter_mean_int(img_obj: np.array, img_sub_obj: np.array, img: np.array, threshold: float)
+    SYNTAX:   filter_mean_int(img_obj: np.array, img_sub_obj: np.array, img: np.array, threshold: float)
+
+get_bg_img
+    FUNCTION: generate background image using otsu
+    SYNTAX:   get_bg_img(img: np.array)
 """
 
 
@@ -606,4 +610,21 @@ def filter_mean_int(img_obj: np.array, img_sub_obj: np.array, img: np.array, thr
             j = j+1
 
     return out
+
+
+def get_bg_img(img: np.array):
+    """
+    Generate background image using otsu
+
+    :param img: np.array, input image
+    :return:
+    """
+    bg = np.ones_like(img)
+    sample = img > threshold_otsu(img)
+    sample = binary_dilation(sample)
+    sample = binary_erosion(sample, disk(2))
+    sample = binary_dilation(sample)
+    bg[sample == 1] = 0
+
+    return bg, sample
 

@@ -93,7 +93,7 @@ for i in range(len(nuclear_props)):
             out_label = label(out)
             out_props = regionprops(out_label, local_DNAFISH_singlet)
             for j in range(len(out_props)):
-                if out_props[j].intensity_mean > threshold_min:
+                if (out_props[j].intensity_mean > threshold_min) & (out_props[j].area > 5):
                     FISH_seg_local[out_label == out_props[j].label] = 1
 
     bg_val = otsu_threshold_val_local_DNAFISH * 3
