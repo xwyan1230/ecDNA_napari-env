@@ -18,9 +18,11 @@ import os
 # INPUT PARAMETERS
 # file info
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220826_neuroblastoma/"
-group = 'C'
+group = 'A'
 group_folder = '%s%s/' % (master_folder, group)
 save_path = group_folder
+sub = 'SZ'
+check_lst = ['S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
 version = 1
 
 # segmentation
@@ -51,6 +53,7 @@ if '.DS_Store' in multi_imgs:
     multi_imgs.remove('.DS_Store')
 
 sample_lst = list(set([i.split('.')[0].split('_')[0] for i in multi_imgs]))
+sample_lst = [i for i in sample_lst if i[0] in check_lst]
 
 for sample in sample_lst:
     print("Analyzing %s, %s/%s" % (sample, sample_lst.index(sample)+1, len(sample_lst)))
@@ -268,7 +271,7 @@ for sample in sample_lst:
                 radial_distribution_relative_r_DNAFISH_smooth = dat.list_smooth(radial_distribution_relative_r_DNAFISH, 3)
                 radial_distribution_relative_r_nuclear_smooth = dat.list_smooth(radial_distribution_relative_r_nuclear, 3)
 
-                radial_curve = np.array(radial_distribution_relative_r_DNAFISH_smooth)/np.array(radial_distribution_relative_r_nuclear_smooth)
+                radial_curve = list(np.array(radial_distribution_relative_r_DNAFISH_smooth)/np.array(radial_distribution_relative_r_nuclear_smooth))
 
                 radial_subtract = np.array(radial_distribution_relative_r_DNAFISH_smooth) - \
                                   np.array(radial_distribution_relative_r_nuclear_smooth)
@@ -362,6 +365,6 @@ for sample in sample_lst:
 data['cum_area_ind_ecDNA_filled'] = dat.list_fill_with_last_num(data['cum_area_ind_ecDNA'])
 data['cum_area_ratio_ind_ecDNA_filled'] = dat.list_fill_with_last_num(data['cum_area_ratio_ind_ecDNA'])
 
-data.to_csv('%s%s_v%s.txt' % (master_folder, group, version), index=False, sep='\t')
+data.to_csv('%s%s_v%s_%s.txt' % (master_folder, group, version, sub), index=False, sep='\t')
 
 print("DONE!")

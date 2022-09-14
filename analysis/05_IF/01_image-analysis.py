@@ -41,9 +41,9 @@ for fov in range(total_fov):
     for n in range(len(nuclear_props)):
         data.loc[len(data.index)] = [sample, fov, n, nuclear_props[n].intensity_mean]
 
-    """viewer = napari.view_image(img_hoechst_stack[fov])
+    viewer = napari.view_image(img_hoechst_stack[fov])
     viewer.add_image(nuclear_seg)
-    napari.run()"""
+    napari.run()
 
 data.to_csv('%s%s.txt' % (master_folder, sample), index=False, sep='\t')
 
