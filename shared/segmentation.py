@@ -8,7 +8,7 @@ from skimage.morphology import extrema, binary_dilation, binary_erosion, disk
 from shared.objects import remove_large, remove_small
 from skimage.measure import label, regionprops_table, regionprops
 import pandas as pd
-import shared.image as img
+import shared.image as ima
 import napari
 
 
@@ -534,7 +534,7 @@ def obj_to_convex(img_obj: np.array):
         convex_local = props[i].convex_image
         centroid = props[i].centroid
         centroid_convex = regionprops(label(convex_local))[0].centroid
-        out = img.image_paste_fix_value(out, convex_local, [int(centroid[0] - centroid_convex[0]),
+        out = ima.image_paste_fix_value(out, convex_local, [int(centroid[0] - centroid_convex[0]),
                                                             int(centroid[1] - centroid_convex[1])], i)
 
     return out
@@ -557,7 +557,7 @@ def obj_to_convex_filter(img_obj: np.array, threshold=0.9):
         if area_ratio > threshold:
             centroid = props[i].centroid
             centroid_convex = regionprops(label(convex_local))[0].centroid
-            out = img.image_paste_fix_value(out, convex_local, [int(centroid[0] - centroid_convex[0]),
+            out = ima.image_paste_fix_value(out, convex_local, [int(centroid[0] - centroid_convex[0]),
                                                                 int(centroid[1] - centroid_convex[1])], i)
 
     return out
@@ -628,3 +628,106 @@ def get_bg_img(img: np.array):
 
     return bg, sample
 
+
+def puncta_seg(img: np.array, nuclear_seg: np.array, local_size: int, local_cycle_factor=15, filter='T',
+               min_threshold_factor=6, min_size=4, min_threshold_first_round_factor=0.5, training='F'):
+    """
+    Segmentation for ecDNA or other puncta signal
+
+    :param img: np.array, img to be segmented
+    :param nuclear_seg: np.array, nuclear segmentation image
+    :param local_size: int, for local image processing
+    :param min_threshold_factor: int, minimum intensity threshold for puncta identification
+    :param filter: str, only accepts 'T' or 'F'
+    :param local_cycle_factor: int, cycle number for local segmentation
+    :return:
+    """
+    nuclear_props = regionprops(nuclear_seg)
+    img_seg = np.zeros_like(img)
+
+    for i in range(len(nuclear_props)):
+        original_centroid_nuclear = nuclear_props[i].centroid
+        position = ima.img_local_position(nuclear_seg, original_centroid_nuclear, local_size)
+        local_nuclear_seg_convex = ima.img_local_seg(nuclear_seg, position, nuclear_props[i].label)
+        local_img = img.copy()
+        local_img = local_img[position[0]:position[1], position[2]:position[3]]
+        local_nuclear_props = regionprops(label(local_nuclear_seg_convex))
+        local_centroid = local_nuclear_props[0].centroid
+
+        # ecDNA segmentation
+        local_img_singlet = local_img.copy()
+        local_img_singlet[local_nuclear_seg_convex == 0] = 0
+        otsu_threshold_val_local_img = threshold_otsu(local_img_singlet)
+
+        if otsu_threshold_val_local_img == 0:
+            print("skip due to no intensity in DNA FISH channel")
+        else:
+            threshold_min = otsu_threshold_val_local_img + (
+                        img.max() - otsu_threshold_val_local_img) / min_threshold_factor
+
+            img_seg_local = np.zeros_like(local_img_singlet)
+
+            for k in range(local_cycle_factor):
+                local = threshold_local(local_img, 10 * k + 7)
+                out = (local_img_singlet > local).astype(int)
+                out = binary_erosion(out)
+
+                if filter == 'T':
+                    if k == 0:
+                        out = binary_dilation(out)
+                        out_label = label(out)
+                        out_props = regionprops(out_label, local_img_singlet)
+                        for j in range(len(out_props)):
+                            temp = np.zeros_like(local_img)
+                            temp[out_label == out_props[j].label] = 1
+                            temp_outer_edge = binary_dilation(temp, disk(6))
+                            temp_outer_edge[temp == 1] = 0
+                            mean_int_outer_edge = np.sum(local_img * temp_outer_edge) / np.sum(temp_outer_edge)
+                            if (out_props[j].intensity_mean / mean_int_outer_edge > 1.2) & (out_props[j].area > min_size) & \
+                                    (out_props[j].intensity_mean > min_threshold_first_round_factor * threshold_min):
+                                img_seg_local[out_label == out_props[j].label] = 1
+                    else:
+                        out_label = label(out)
+                        out_props = regionprops(out_label, local_img_singlet)
+                        for j in range(len(out_props)):
+                            if (out_props[j].intensity_mean > threshold_min) & (out_props[j].area > min_size):
+                                img_seg_local[out_label == out_props[j].label] = 1
+                elif filter == 'F':
+                    img_seg_local[out == 1] = 1
+
+            img_seg_watershed = np.zeros_like(local_img_singlet)
+            bg_val = otsu_threshold_val_local_img * 3
+            extreme_val = int(local_img_singlet.max() * 2 / otsu_threshold_val_local_img)
+            maxima = extrema.h_maxima(local_img, extreme_val)
+            elevation_map = sobel(local_img)
+            markers = np.zeros_like(local_img)
+            markers[local_img_singlet < bg_val] = 1
+            markers[maxima == 1] = 2
+            seg_wat = segmentation.watershed(elevation_map, markers)
+            seg_wat_label = label(seg_wat)
+            seg_wat_props = regionprops(seg_wat_label, local_img_singlet)
+            for j in range(len(seg_wat_props)):
+                if (seg_wat_props[j].intensity_mean > threshold_min) & (seg_wat_props[j].area > 12):
+                    img_seg_watershed[seg_wat_label == seg_wat_props[j].label] = 1
+
+            img_seg_individual = img_seg_watershed.copy()
+            img_seg_individual[img_seg_local == 1] = 1
+            img_seg_individual[local_nuclear_seg_convex == 0] = 0
+
+            if training == 'T':
+                # manuel correction
+                viewer = napari.Viewer()
+                viewer.add_image(local_img, blending='additive', colormap='green', contrast_limits=[0, img.max()])
+                viewer.add_image(local_nuclear_seg_convex, blending='additive', colormap='blue')
+                viewer.add_image(img_seg_individual, blending='additive', contrast_limits=[0, 1])
+                shapes_signal_remove = viewer.add_shapes(name='signal to be removed', ndim=2)
+                shapes_signal_add = viewer.add_shapes(name='signal to be added', ndim=2)
+                napari.run()
+
+                img_seg_individual = ima.napari_add_or_remove(shapes_signal_remove.data, 'remove', img_seg_individual)
+                img_seg_individual = ima.napari_add_or_remove(shapes_signal_add.data, 'add', img_seg_individual)
+
+            img_seg = ima.image_paste_to(img_seg, img_seg_individual,
+                                         [int(original_centroid_nuclear[0] - local_centroid[0]),
+                                          int(original_centroid_nuclear[1] - local_centroid[1])])
+    return img_seg
