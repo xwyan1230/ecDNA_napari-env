@@ -17,16 +17,16 @@ import os
 
 # INPUT PARAMETERS
 # file info
-master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220420_sp8_DMandBRD4_plate/"
-sample = 'DM'
-sample_folder = '%s_singleZ_imageJ' % sample
+master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220916_double_funnel_test/"
+sample = 'slide2_B2'
+sample_folder = sample
 save_path = master_folder
 
 # set parameters
 pixel_size = 58.7  # nm (sp8 confocal 3144x3144)
 cell_avg_size = 10  # um (Colo)
 nuclear_size_range = [0.6, 1.5]  # used to filter nucleus
-n_nuclear_convex_dilation = 1
+n_nuclear_convex_dilation = 0
 convex_conversion_threshold = 0.9
 local_size = 200
 
@@ -36,10 +36,10 @@ min_size_nuclear = (nuclear_size_range[0] * cell_avg_size * 1000/(pixel_size * 2
 max_size_nuclear = (nuclear_size_range[1] * cell_avg_size * 1000/(pixel_size * 2)) ** 2 * math.pi
 
 # load images
-file_prefix = '%s_singleZ_25pos_RAW' % sample
+file_prefix = '20220916_double_funnel_test_%s_RAW' % sample
 img_nuclear_stack = skio.imread("%s%s/%s_ch00.tif" % (master_folder, sample_folder, file_prefix), plugin="tifffile")
-img_DNAFISH_stack = skio.imread("%s%s/%s_ch02.tif" % (master_folder, sample_folder, file_prefix), plugin="tifffile")
-img_IF_stack = skio.imread("%s%s/%s_ch01.tif" % (master_folder, sample_folder, file_prefix), plugin="tifffile")
+img_DNAFISH_stack = skio.imread("%s%s/%s_ch01.tif" % (master_folder, sample_folder, file_prefix), plugin="tifffile")
+# img_IF_stack = skio.imread("%s%s/%s_ch01.tif" % (master_folder, sample_folder, file_prefix), plugin="tifffile")
 
 total_fov = img_nuclear_stack.shape[0]
 start_fov = 0
@@ -53,14 +53,15 @@ for f in range(total_fov):
 
     img_nuclear = img_nuclear_stack[fov]
     img_DNAFISH = img_DNAFISH_stack[fov]
-    img_IF = img_IF_stack[fov]
+    # img_IF = img_IF_stack[fov]
 
     # Perform nuclear segmentation
     img_nuclear_seg = seg.nuclear_seg1(img_nuclear, local_factor=local_factor_nuclear, min_size=min_size_nuclear,
                                        max_size=max_size_nuclear)
     img_nuclear_seg_convex = obj.label_resort(seg.obj_to_convex_filter(img_nuclear_seg,
                                                                        threshold=convex_conversion_threshold))
-    img_nuclear_seg_convex = dilation(img_nuclear_seg_convex, disk(n_nuclear_convex_dilation))
+    if n_nuclear_convex_dilation > 0:
+        img_nuclear_seg_convex = dilation(img_nuclear_seg_convex, disk(n_nuclear_convex_dilation))
     img_seg[fov] = img_nuclear_seg_convex
 
     nuclear_props = regionprops(img_nuclear_seg_convex)
@@ -76,8 +77,8 @@ for f in range(total_fov):
         local_nuclear = local_nuclear[position[0]:position[1], position[2]:position[3]]
         local_DNAFISH = img_DNAFISH.copy()
         local_DNAFISH = local_DNAFISH[position[0]:position[1], position[2]:position[3]]
-        local_IF = img_IF.copy()
-        local_IF = local_IF[position[0]:position[1], position[2]:position[3]]
+        # local_IF = img_IF.copy()
+        # local_IF = local_IF[position[0]:position[1], position[2]:position[3]]
         local_nuclear_props = regionprops(label(local_nuclear_seg_convex))
         local_centroid = local_nuclear_props[0].centroid
 
@@ -153,7 +154,7 @@ for f in range(total_fov):
 
     viewer = napari.view_image(img_nuclear, blending='additive', colormap='blue')
     viewer.add_image(img_DNAFISH, blending='additive', colormap='green')
-    viewer.add_image(img_IF, blending='additive', colormap='magenta')
+    # viewer.add_image(img_IF, blending='additive', colormap='magenta')
     plt.imsave('%s%s/%s_%s_napari-img.tiff' % (save_path, sample_folder, file_prefix, fov), dis.blending(viewer))
     viewer.close()
 

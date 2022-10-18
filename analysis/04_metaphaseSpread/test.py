@@ -18,7 +18,7 @@ import os
 # INPUT PARAMETERS
 # file info
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220909_EdU_metaphasetest/20220909_EdU_metaphasetest/"
-start_fov = 21
+start_fov = 26
 total_fov = 26
 
 for f in range(total_fov):
