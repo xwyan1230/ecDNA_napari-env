@@ -80,6 +80,10 @@ polygon_to_mask
 napari_add_or_remove
     FUNCTION: manual correction by adding or removing objects based on napari shapes
     SYNTAX:   napari_add_or_remove(shape_data, option: str, modify_mask: np.array)
+    
+napari_add_or_remove_obj
+    FUNCTION: manual correction by adding or removing objects based on napari shapes
+    SYNTAX:   manual correction by adding or removing objects based on napari shapes
 
 napari_change_between_masks
     FUNCTION: manual correction by moving objects between masks based on napari shapes
@@ -478,6 +482,28 @@ def napari_add_or_remove(shape_data, option: str, modify_mask: np.array):
         mask = polygon_to_mask(modify_mask.shape, poly_data)
         if option == 'add':
             out[mask == 1] = 1
+        elif option == 'remove':
+            out[mask == 1] = 0
+
+    return out
+
+
+def napari_add_or_remove_obj(shape_data, option: str, modify_mask: np.array):
+    """
+    Manual correction by adding or removing objects based on napari shapes
+
+    :param shape_data: polygon data from napari shape
+    :param option: only accept 'add' or 'remove'
+    :param modify_mask: the mask that is to be modified, labeled image
+    :return:
+    """
+    out = modify_mask.copy()
+    max_out = modify_mask.max()
+    for i in range(len(shape_data)):
+        poly_data = shape_data[i]
+        mask = polygon_to_mask(modify_mask.shape, poly_data)
+        if option == 'add':
+            out[mask == 1] = max_out+1+i
         elif option == 'remove':
             out[mask == 1] = 0
 

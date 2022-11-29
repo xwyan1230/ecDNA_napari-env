@@ -3,6 +3,8 @@ from skimage.morphology import dilation
 import matplotlib.pyplot as plt
 import math
 import skimage.io as skio
+import shared.objects as obj
+import shared.image as ima
 import tifffile as tif
 import shared.display as dis
 import napari
@@ -10,10 +12,10 @@ import napari
 # INPUT PARAMETERS
 # file info
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20221017_periphery-localization_analysis/20220927_Jun_GBM39_EGFR/"
-sample = 'gbm39ec hu'
+sample = 'gbm39ec con'
 master_path = '%s%s/' % (master_folder, sample)
 end_fov = 10
-start_fov = 1
+start_fov = 3
 total_fov = end_fov - start_fov + 1
 save_path = master_path
 # cell info
@@ -45,6 +47,21 @@ for f in range(total_fov):
     img_nuclear_seg_convex = seg.obj_to_convex(img_nuclear_seg)
     # img_nuclear_seg_convex = dilation(img_nuclear_seg_convex)
 
+    # manual correction for nuclear segmentation
+    viewer = napari.Viewer()
+    viewer.add_image(img_nuclear, blending='additive', colormap='blue', contrast_limits=[0, img_nuclear.max()])
+    viewer.add_image(img_DNAFISH, blending='additive', colormap='green', contrast_limits=[0, img_DNAFISH.max()])
+    viewer.add_image(img_nuclear_seg_convex, blending='additive', colormap='viridis')
+    shapes_seg_remove = viewer.add_shapes(name='seg to be removed', ndim=2)
+    shapes_seg_add = viewer.add_shapes(name='seg to be added', ndim=2)
+    napari.run()
+
+    img_nuclear_seg_convex = ima.napari_add_or_remove(shapes_seg_remove.data, 'remove', img_nuclear_seg_convex)
+    img_nuclear_seg_convex = ima.napari_add_or_remove_obj(shapes_seg_add.data, 'add', img_nuclear_seg_convex)
+    img_nuclear_seg_convex = obj.label_resort(img_nuclear_seg_convex)
+
+    tif.imwrite('%s%s_nuclear_seg.tif' % (master_path, file_prefix), img_nuclear_seg_convex)
+
     # DNAFISH segmentation
     img_DNAFISH_seg = seg.puncta_seg(img_DNAFISH, img_nuclear_seg_convex, local_size)
 
@@ -71,7 +88,7 @@ for f in range(total_fov):
     viewer.add_image(img_RPA_seg, blending='additive', contrast_limits=[0, 1])
     napari.run()"""
 
-    tif.imwrite('%s%s_nuclear_seg.tif' % (master_path, file_prefix), img_nuclear_seg_convex)
+    # tif.imwrite('%s%s_nuclear_seg.tif' % (master_path, file_prefix), img_nuclear_seg_convex)
     tif.imwrite('%s%s_DNAFISH_seg.tif' % (master_path, file_prefix), img_DNAFISH_seg)
     # tif.imwrite('%s%s_RPA_seg.tif' % (master_path, file_prefix), img_RPA_seg)
 

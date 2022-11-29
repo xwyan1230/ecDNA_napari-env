@@ -16,8 +16,8 @@ import os
 
 # INPUT PARAMETERS
 # file info
-master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20221017_periphery-localization_analysis/20220826_neuroblastoma/A/"
-sample = 'V'
+master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20221017_periphery-localization_analysis/20220826_neuroblastoma/E/"
+sample = 'LY'
 save_path = master_folder
 
 # mode
@@ -34,7 +34,12 @@ local_size = 100
 
 # load images
 img_nuclear = skio.imread("%s%s_b.BMP" % (master_folder, sample))[:, :, 2]
+# 1024x1360
+# img_nuclear = np.concatenate([img_nuclear, np.zeros(shape=[13, 1360])], axis=0)
+# tif.imwrite("%s/%s_b_resize.tif" % (master_folder, sample), img_nuclear)
 img_DNAFISH = skio.imread("%s%s_g.BMP" % (master_folder, sample))[:, :, 1]
+# img_DNAFISH = np.concatenate([img_DNAFISH, np.zeros(shape=[1024, 5])], axis=1)
+# tif.imwrite("%s/%s_g_resize.tif" % (master_folder, sample), img_DNAFISH)
 img_centromere = skio.imread("%s%s_r.BMP" % (master_folder, sample))[:, :, 0]
 
 # bg_correction
@@ -74,6 +79,7 @@ if nuclear_seg == 'Y':
 else:
     img_nuclear_seg_convex = skio.imread("%s%s_seg.tif" % (master_folder, sample), plugin="tifffile")
 
+tif.imwrite("%s/%s_seg.tif" % (master_folder, sample), img_nuclear_seg_convex)
 nuclear_props = regionprops(img_nuclear_seg_convex, img_nuclear_bg_corrected)
 
 img_DNAFISH_seg = np.zeros_like(img_DNAFISH_bg_corrected)
@@ -164,7 +170,6 @@ viewer.add_image(FISH_seg_local, blending='additive')
 viewer.add_image(FISH_seg, blending='additive')
 napari.run()"""
 
-tif.imwrite("%s/%s_seg.tif" % (master_folder, sample), img_nuclear_seg_convex)
 tif.imwrite("%s/%s_ecSeg.tif" % (master_folder, sample), img_DNAFISH_seg)
 
 # viewer

@@ -77,6 +77,10 @@ List related:
         FUNCTION: exchange x and y for a list of points
         SYNTAX:   points_exchange_xy(lst: list)
         
+    nan_replace
+        FUNCTION: replace nan in a list by surrounding values
+        SYNTAX:   nan_replace(lst: list)
+        
 Matrix related:
     matrix_pad_with_zeros
         FUNCTION: pad matrix with trailing zeros
@@ -477,5 +481,25 @@ def points_exchange_xy(lst: list):
     out = []
     for i in range(len(lst)):
         out.append([lst[i][1], lst[i][0]])
+
+    return out
+
+
+def nan_replace(lst: list):
+    """
+    Replace nan in a list by surrounding values
+
+    :param lst: list
+    :return:
+    """
+    out = lst.copy()
+    if np.isnan(lst).any():
+        if math.isnan(lst[0]):
+            out[0] = out[1]
+        if math.isnan(lst[-1]):
+            out[-1] = out[-2]
+        for i in range(len(out)-2):
+            if math.isnan(lst[i+1]):
+                out[i+1] = (out[i]+out[i+2])*0.5
 
     return out

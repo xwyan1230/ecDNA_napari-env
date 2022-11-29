@@ -16,7 +16,7 @@ import os
 # INPUT PARAMETERS
 # file info
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20221017_periphery-localization_analysis/20220826_neuroblastoma/"
-group = 'C'
+group = 'E'
 group_folder = '%s%s/' % (master_folder, group)
 save_path = master_folder
 

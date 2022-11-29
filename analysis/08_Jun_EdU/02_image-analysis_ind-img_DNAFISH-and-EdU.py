@@ -12,28 +12,32 @@ import napari
 
 # INPUT PARAMETERS
 # file info
-master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20220916_double_funnel_test/"
-sample = 'slide1_B2'
-sample_folder = sample
+master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20221017_periphery-localization_analysis/20220927_Jun_GBM39_EGFR/"
+sample = 'gbm39ec con'
+master_path = '%s%s/' % (master_folder, sample)
 save_path = master_folder
-start_fov = 0
-total_fov = 20
+end_fov = 10
+start_fov = 1
+total_fov = end_fov - start_fov + 1
 version = 1
 
-local_size = 200
+local_size = 150
 rmax = 100
 
 data = pd.DataFrame(columns=['nuclear', 'FOV',
                              'centroid_nuclear', 'area_nuclear',
                              'bg_int_nuclear', 'mean_int_nuclear', 'total_int_nuclear',
                              'bg_int_DNAFISH', 'mean_int_DNAFISH', 'total_int_DNAFISH',
+                             'mean_int_EdU',
                              'n_ecDNA',
                              'mean_int_ecDNA', 'total_int_ecDNA', 'mean_int_ind_ecDNA', 'total_int_ind_ecDNA',
                              'total_area_ecDNA', 'total_area_ratio_ecDNA', 'area_ind_ecDNA', 'area_ratio_ind_ecDNA',
                              'max_area_ecDNA', 'max_area_ratio_ecDNA',
                              'g', 'g_value',
                              'radial_curve_nuclear', 'radial_curve_DNAFISH',
+                             'radial_curve_nuclear_100', 'radial_curve_DNAFISH_100',
                              'radial_curve_nuclear_20', 'radial_curve_DNAFISH_20',
+                             'radial_curve_nuclear_10', 'radial_curve_DNAFISH_10',
                              'radial_center', 'radial_edge',
                              'relative_r_area', 'relative_r_int',
                              'angle_curve_nuclear', 'angle_curve_DNAFISH', 'angle_value',
@@ -45,26 +49,17 @@ data = pd.DataFrame(columns=['nuclear', 'FOV',
                              'cum_area_ratio_ind_ecDNA', 'cum_area_ratio_n_half',
                              'cum_int_ind_ecDNA', 'cum_int_n_half'])
 
-# load images
-file_prefix = '20220916_double_funnel_test_%s_RAW' % sample
-img_nuclear_stack = skio.imread("%s%s/%s_ch00.tif" % (master_folder, sample_folder, file_prefix), plugin="tifffile")
-img_DNAFISH_stack = skio.imread("%s%s/%s_ch01.tif" % (master_folder, sample_folder, file_prefix), plugin="tifffile")
-img_nuclear_seg_stack = skio.imread("%s%s/%s_seg.tif" % (master_folder, sample_folder, file_prefix), plugin="tifffile")
-img_DNAFISH_seg_stack = skio.imread("%s%s/%s_ecSeg.tif" % (master_folder, sample_folder, file_prefix), plugin="tifffile")
-
 for f in range(total_fov):
     fov = f + start_fov
-    print("Analyzing %s, fov %s/%s" % (sample, fov+1, total_fov))
+    print("Analyzing %s, fov %s/%s" % (sample, fov, total_fov))
+    file_prefix = "40x %s-%s" % (sample, fov)
 
     # load images
-    img_nuclear = img_nuclear_stack[fov]
-    img_DNAFISH = img_DNAFISH_stack[fov]
-    img_nuclear_seg = img_nuclear_seg_stack[fov]
-    img_DNAFISH_seg = img_DNAFISH_seg_stack[fov]
-    """for r in range(5):
-        img_DNAFISH_seg = binary_dilation(img_DNAFISH_seg)
-    for r in range(5):
-        img_DNAFISH_seg = binary_erosion(img_DNAFISH_seg)"""
+    img_nuclear = skio.imread("%sC2-%s.tif" % (master_path, file_prefix), plugin="tifffile")
+    img_DNAFISH = skio.imread("%sC1-%s.tif" % (master_path, file_prefix), plugin="tifffile")
+    img_nuclear_seg = skio.imread("%s%s_nuclear_seg.tif" % (master_path, file_prefix), plugin="tifffile")
+    img_DNAFISH_seg = skio.imread("%s%s_DNAFISH_seg.tif" % (master_path, file_prefix), plugin="tifffile")
+    img_EdU = skio.imread("%sC4-%s.tif" % (master_path, file_prefix), plugin="tifffile")
 
     # background measurement and background correction
     _, sample_img_nuclear = seg.get_bg_img(img_nuclear)
@@ -81,12 +76,13 @@ for f in range(total_fov):
     bg_int_DNAFISH = np.sum(bg * img_DNAFISH) / np.sum(bg)
     img_nuclear_bgc = img_nuclear
     img_DNAFISH_bgc = img_DNAFISH
+    img_EdU_bgc = img_EdU
 
     # get local images
     nuclear_props = regionprops(img_nuclear_seg)
 
     for i in range(len(nuclear_props)):
-        print("Analyzing %s, fov %s, nuclear %s/%s" % (sample, fov + 1, i + 1, len(nuclear_props)))
+        print("Analyzing %s, fov %s, nuclear %s/%s" % (sample, fov, i + 1, len(nuclear_props)))
         original_centroid_nuclear = nuclear_props[i].centroid
         position = ima.img_local_position(img_nuclear_seg, original_centroid_nuclear, local_size)
         local_nuclear_seg = ima.img_local_seg(img_nuclear_seg, position, nuclear_props[i].label)
@@ -96,10 +92,13 @@ for f in range(total_fov):
         local_DNAFISH = local_DNAFISH[position[0]:position[1], position[2]:position[3]]
         local_DNAFISH_seg = img_DNAFISH_seg.copy()
         local_DNAFISH_seg = local_DNAFISH_seg[position[0]:position[1], position[2]:position[3]]
+        local_EdU = img_EdU_bgc.copy()
+        local_EdU = local_EdU[position[0]:position[1], position[2]:position[3]]
 
         # basic measurements
         local_nuclear_props = regionprops(label(local_nuclear_seg), local_nuclear)
         local_DNAFISH_props = regionprops(label(local_nuclear_seg), local_DNAFISH)
+        local_EdU_props = regionprops(label(local_nuclear_seg), local_EdU)
         ecDNA_props = regionprops(label(local_DNAFISH_seg), local_DNAFISH)
 
         area_nuclear = local_nuclear_props[0].area
@@ -107,6 +106,7 @@ for f in range(total_fov):
         total_int_nuclear = area_nuclear * mean_int_nuclear
         mean_int_DNAFISH = local_DNAFISH_props[0].intensity_mean
         total_int_DNAFISH = area_nuclear * mean_int_DNAFISH
+        mean_int_EdU = local_EdU_props[0].intensity_mean
 
         # ecDNA measurements
         n_ecDNA = len(ecDNA_props)
@@ -185,7 +185,8 @@ for f in range(total_fov):
             ind_ecDNA = pd.DataFrame({'area': area_ind_ecDNA, 'total_int': total_int_ind_ecDNA,
                                       'centroid': centroid_ind_ecDNA})
 
-            ind_ecDNA_sort_area = ind_ecDNA.copy().sort_values(by='area', axis=0, ascending=False, inplace=False,
+            ind_ecDNA_sort_area = ind_ecDNA.copy().sort_values(by='area', axis=0, ascending=False,
+                                                               inplace=False,
                                                                ignore_index=True)
             dis = []
             for k in range(len(ind_ecDNA_sort_area)):
@@ -199,12 +200,14 @@ for f in range(total_fov):
                      for i in range(len(current_ecDNA))]
 
                 for ind in range(n_ecDNA - 1):
-                    dis_temp = dis_temp + current_ecDNA['area'][ind + 1] * current_ecDNA['dis'][ind+1] / total_area_ecDNA
+                    dis_temp = dis_temp + current_ecDNA['area'][ind + 1] * current_ecDNA['dis'][
+                        ind + 1] / total_area_ecDNA
                 dis.append(dis_temp)
             ind_ecDNA_sort_area['dis'] = dis
 
             for ind in range(n_ecDNA):
-                dis_to_hub_area_v2 = dis_to_hub_area_v2 + ind_ecDNA_sort_area['area'][ind] * ind_ecDNA_sort_area['dis'][ind] / total_area_ecDNA
+                dis_to_hub_area_v2 = dis_to_hub_area_v2 + ind_ecDNA_sort_area['area'][ind] * \
+                                     ind_ecDNA_sort_area['dis'][ind] / total_area_ecDNA
 
         # auto-correlation
         _, r, g, dg = mat.auto_correlation(local_DNAFISH, local_nuclear_seg, rmax)
@@ -218,9 +221,9 @@ for f in range(total_fov):
         local_edge_distance_map[local_nuclear_seg == 0] = -1
         local_relative_r_map = local_centroid_distance_map / (local_centroid_distance_map + local_edge_distance_map)
 
-        radial_distribution_relative_r_DNAFISH = \
+        radial_distribution_relative_r_DNAFISH_100 = \
             img.radial_distribution_from_distance_map(local_nuclear_seg, local_relative_r_map, local_DNAFISH, 0.01, 1)
-        radial_distribution_relative_r_nuclear = \
+        radial_distribution_relative_r_nuclear_100 = \
             img.radial_distribution_from_distance_map(local_nuclear_seg, local_relative_r_map, local_nuclear, 0.01, 1)
 
         radial_distribution_relative_r_DNAFISH_20 = \
@@ -228,8 +231,13 @@ for f in range(total_fov):
         radial_distribution_relative_r_nuclear_20 = \
             img.radial_distribution_from_distance_map(local_nuclear_seg, local_relative_r_map, local_nuclear, 0.05, 1)
 
-        radial_distribution_relative_r_DNAFISH_smooth = dat.list_smooth(radial_distribution_relative_r_DNAFISH, 3)
-        radial_distribution_relative_r_nuclear_smooth = dat.list_smooth(radial_distribution_relative_r_nuclear, 3)
+        radial_distribution_relative_r_DNAFISH_10 = \
+            img.radial_distribution_from_distance_map(local_nuclear_seg, local_relative_r_map, local_DNAFISH, 0.1, 1)
+        radial_distribution_relative_r_nuclear_10 = \
+            img.radial_distribution_from_distance_map(local_nuclear_seg, local_relative_r_map, local_nuclear, 0.1, 1)
+
+        radial_distribution_relative_r_DNAFISH_smooth = dat.list_smooth(radial_distribution_relative_r_DNAFISH_100, 3)
+        radial_distribution_relative_r_nuclear_smooth = dat.list_smooth(radial_distribution_relative_r_nuclear_100, 3)
 
         radial_subtract = np.array(radial_distribution_relative_r_DNAFISH_smooth) - \
                           np.array(radial_distribution_relative_r_nuclear_smooth)
@@ -286,6 +294,7 @@ for f in range(total_fov):
                                      original_centroid_nuclear, area_nuclear,
                                      bg_int_nuclear, mean_int_nuclear, total_int_nuclear,
                                      bg_int_DNAFISH, mean_int_DNAFISH, total_int_DNAFISH,
+                                     mean_int_EdU,
                                      n_ecDNA,
                                      mean_int_ecDNA, total_int_ecDNA, mean_int_ind_ecDNA, total_int_ind_ecDNA,
                                      total_area_ecDNA, total_area_ratio_ecDNA, area_ind_ecDNA, area_ratio_ind_ecDNA,
@@ -293,8 +302,12 @@ for f in range(total_fov):
                                      g, g_value,
                                      radial_distribution_relative_r_nuclear_smooth,
                                      radial_distribution_relative_r_DNAFISH_smooth,
+                                     radial_distribution_relative_r_nuclear_100,
+                                     radial_distribution_relative_r_DNAFISH_100,
                                      radial_distribution_relative_r_nuclear_20,
                                      radial_distribution_relative_r_DNAFISH_20,
+                                     radial_distribution_relative_r_nuclear_10,
+                                     radial_distribution_relative_r_DNAFISH_10,
                                      radial_subtract_center, radial_subtract_edge,
                                      relative_r_area, relative_r_int,
                                      angle_distribution_nuclear_smooth_centered,
@@ -314,6 +327,3 @@ data['cum_int_ind_ecDNA_filled'] = dat.list_fill_with_last_num(data['cum_int_ind
 data.to_csv('%s%s_v%s.txt' % (master_folder, sample, version), index=False, sep='\t')
 
 print("DONE!")
-
-
-
