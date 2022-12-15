@@ -10,23 +10,23 @@ import napari
 
 # INPUT PARAMETERS
 # file info
-master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20221213_analysis_DNA-FISH_mixing_exp/20221121_H2B-series_POLR3D-BRD4-BRD1-DAPK2/"
+master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20221215_analysis_MYC-IF/20221117_immunoFISH_acid/"
 data_dir1 = "%sdata/" % master_folder
 data_dir2 = "%sfigures/" % master_folder
 output_dir = "%sfigures/" % master_folder
 
-sample = 'H2B+POLR3D'
-file_name = '%s_RAW' % sample
+sample = 'MYC-new'
+file_name = 'DM_%s_acid_RAW' % sample
 img_hoechst_stack = skio.imread("%s%s_ch00.tif" % (data_dir1, file_name), plugin="tifffile")
-img_mCherry_stack = skio.imread("%s%s_ch02.tif" % (data_dir1, file_name), plugin="tifffile")
-img_DNAFISH_stack = skio.imread("%s%s_ch01.tif" % (data_dir1, file_name), plugin="tifffile")
+img_MYC_stack = skio.imread("%s%s_ch01.tif" % (data_dir1, file_name), plugin="tifffile")
+img_DNAFISH_stack = skio.imread("%s%s_ch02.tif" % (data_dir1, file_name), plugin="tifffile")
 
 n_nuclear_convex_dilation = 2
 local_size = 200
 rmax = 100
 
 data = pd.DataFrame(columns=['nuclear', 'FOV',
-                             'centroid_nuclear', 'area_nuclear', 'mean_int_nuclear', 'mCherry_mean',
+                             'centroid_nuclear', 'area_nuclear', 'mean_int_nuclear', 'MYC_mean',
                              'mean_int_DNAFISH', 'n_ecDNA',
                              'mean_int_ecDNA', 'total_area_ecDNA', 'total_area_ratio_ecDNA',
                              'max_area_ecDNA', 'max_area_ratio_ecDNA',
@@ -40,10 +40,10 @@ data = pd.DataFrame(columns=['nuclear', 'FOV',
                              'cum_area_ratio_ind_ecDNA', 'cum_area_ratio_n_half',
                              'cum_int_ind_ecDNA', 'cum_int_n_half'])
 
-for fov in range(img_mCherry_stack.shape[0]):
+for fov in range(img_MYC_stack.shape[0]):
     print(fov)
     img_nuclear_bgc = img_hoechst_stack[fov, :, :]
-    img_mCherry = img_mCherry_stack[fov, :, :]
+    img_MYC = img_MYC_stack[fov, :, :]
     img_DNAFISH_bgc = img_DNAFISH_stack[fov, :, :]
     img_seg = skio.imread("%s%s/seg_tif/%s_%s_seg.tif" % (data_dir2, sample, sample, fov), plugin="tifffile")
     img_ecSeg = skio.imread("%s%s/seg_tif/%s_%s_ecseg.tif" % (data_dir2, sample, sample, fov), plugin="tifffile")
@@ -70,7 +70,7 @@ for fov in range(img_mCherry_stack.shape[0]):
         local_nuclear = local_nuclear[position[0]:position[1], position[2]:position[3]]
         local_DNAFISH = img_DNAFISH_bgc.copy()
         local_DNAFISH = local_DNAFISH[position[0]:position[1], position[2]:position[3]]
-        local_mCherry = img_mCherry.copy()
+        local_mCherry = img_MYC.copy()
         local_mCherry = local_mCherry[position[0]:position[1], position[2]:position[3]]
         local_DNAFISH_seg = img_ecSeg.copy()
         local_DNAFISH_seg = local_DNAFISH_seg[position[0]:position[1], position[2]:position[3]]
@@ -165,21 +165,25 @@ for fov in range(img_mCherry_stack.shape[0]):
         # radial distribution
         local_nuclear_centroid = local_nuclear_props[0].centroid
         _, local_edge_distance_map = medial_axis(local_nuclear_seg_mCherry, return_distance=True)
-        local_centroid_distance_map = ima.distance_map_from_point(local_nuclear_seg_mCherry, local_nuclear_centroid)
+        local_centroid_distance_map = ima.distance_map_from_point(local_nuclear_seg_mCherry,
+                                                                  local_nuclear_centroid)
         local_centroid_distance_map[local_nuclear_seg_mCherry == 0] = 0
         local_edge_distance_map[local_nuclear_seg_mCherry == 0] = -1
         local_relative_r_map = local_centroid_distance_map / (
-                    local_centroid_distance_map + local_edge_distance_map)
+                local_centroid_distance_map + local_edge_distance_map)
 
         radial_distribution_relative_r_DNAFISH = \
-            ima.radial_distribution_from_distance_map(local_nuclear_seg_mCherry, local_relative_r_map, local_DNAFISH,
+            ima.radial_distribution_from_distance_map(local_nuclear_seg_mCherry, local_relative_r_map,
+                                                      local_DNAFISH,
                                                       0.1, 1)
         radial_distribution_relative_r_nuclear = \
-            ima.radial_distribution_from_distance_map(local_nuclear_seg_mCherry, local_relative_r_map, local_nuclear,
+            ima.radial_distribution_from_distance_map(local_nuclear_seg_mCherry, local_relative_r_map,
+                                                      local_nuclear,
                                                       0.1, 1)
 
         radial_distribution_relative_r_normalized = \
-            list(np.array(radial_distribution_relative_r_DNAFISH) / np.array(radial_distribution_relative_r_nuclear))
+            list(np.array(radial_distribution_relative_r_DNAFISH) / np.array(
+                radial_distribution_relative_r_nuclear))
         radial_distribution_relative_r_normalized = dat.nan_replace(radial_distribution_relative_r_normalized)
 
         # auto-correlation

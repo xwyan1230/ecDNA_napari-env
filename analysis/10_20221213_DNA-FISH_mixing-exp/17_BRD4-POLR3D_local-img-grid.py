@@ -20,14 +20,14 @@ output_dir = "%sfigures/" % master_folder
 
 mCherry_pos_color = 'gray'
 mCherry_neg_color = 'red'
-mCherry_pos_threshold = 30000
-mCherry_neg_threshold = 20000
+mCherry_pos_threshold = 10000
+mCherry_neg_threshold = 5000
 
-sample = 'H2B+BRD1'
+sample = 'DM_mix_DM-H2B-mCherry'
 file_name = '%s_RAW' % sample
 img_hoechst_stack = skio.imread("%s%s_ch00.tif" % (data_dir1, file_name), plugin="tifffile")
-img_mCherry_stack = skio.imread("%s%s_ch02.tif" % (data_dir1, file_name), plugin="tifffile")
-img_DNAFISH_stack = skio.imread("%s%s_ch01.tif" % (data_dir1, file_name), plugin="tifffile")
+img_mCherry_stack = skio.imread("%s%s_ch01.tif" % (data_dir1, file_name), plugin="tifffile")
+img_DNAFISH_stack = skio.imread("%s%s_ch02.tif" % (data_dir1, file_name), plugin="tifffile")
 
 df = pd.read_csv(("%s%s_ecDNA.txt" % (data_dir2, sample)), na_values=['.'], sep='\t')
 
