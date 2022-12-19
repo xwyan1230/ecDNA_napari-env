@@ -20,11 +20,13 @@ def fov_to_str(fov):
 # 2048x2048
 for f in range(total_fov):
     fov = f + start_fov
-    file_name = 'Series%s_RAW' % fov_to_str(fov)
+    # file_name = 'Series%s_RAW' % fov_to_str(fov)
+    file_name = '3144_RAW'
     img_hoechst = skio.imread("%s%s_ch00.tif" % (master_folder, file_name), plugin="tifffile")
     img_FISH = skio.imread("%s%s_ch02.tif" % (master_folder, file_name), plugin="tifffile")
     img_EdU = skio.imread("%s%s_ch01.tif" % (master_folder, file_name), plugin="tifffile")
-    img_EdU = np.concatenate([np.zeros(shape=[2048, 6]), img_EdU], axis=1)
+    # img_EdU = np.concatenate([np.zeros(shape=[2048, 6]), img_EdU], axis=1) # for 2048x2048
+    img_EdU = np.concatenate([np.zeros(shape=[3144, 8]), img_EdU], axis=1)
 
     viewer = napari.Viewer()
     viewer.add_image(img_hoechst, blending='additive', colormap='blue', contrast_limits=[0, img_hoechst.max()])
