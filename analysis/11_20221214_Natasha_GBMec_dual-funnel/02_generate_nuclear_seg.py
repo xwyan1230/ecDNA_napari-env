@@ -1,5 +1,4 @@
 import shared.segmentation as seg
-from skimage.morphology import disk, dilation
 from skimage.measure import regionprops
 import math
 import numpy as np
@@ -7,7 +6,6 @@ import skimage.io as skio
 import tifffile as tif
 import os
 import pandas as pd
-import shared.image as img
 import napari
 
 # INPUT PARAMETERS
