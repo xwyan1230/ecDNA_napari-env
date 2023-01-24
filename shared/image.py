@@ -265,7 +265,7 @@ def logical_ellipse(img: np.array, centerX: int, centerY: int, a: int, b: int, a
     :param centerX: center coordinate X
     :param centerY: center coordinate Y
     :param a: r on X axis
-    :param b: r on b axis
+    :param b: r on Y axis
     :param avg: intensity value for the ellipse, default=1
     :return:
     """
