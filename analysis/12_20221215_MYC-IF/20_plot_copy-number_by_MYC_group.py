@@ -24,10 +24,11 @@ line_colors = [(0.30, 0.30, 0.30), (0.85, 0.35, 0.25),  (0.30, 0.70, 0.70)]
 feature = ['radial_curve_nuclear', 'radial_curve_DNAFISH', 'radial_curve_normalized']
 for f in feature:
     df[f] = [dat.str_to_float(df[f][i]) for i in range(len(df))]
+df['total_area_ecDNA_sqrt'] = np.sqrt(df['total_area_ecDNA'])
 
 # radial curve
 print("Plotting radial curve...")
-x = np.arange(0.05, 1, 0.1)
+x = np.arange(0.025, 1, 0.05)
 x_label = 'relative r'
 
 sample_lst = []
@@ -52,22 +53,15 @@ for i in range(len(df)):
 df['sample'] = sample_lst
 
 hue_order = [10000, 15000, 20000, 25000, 30000, 35000, 40000, 45000]
-
-df['total_area_ecDNA_sqrt'] = np.sqrt(df['total_area_ecDNA'])
-
-xlabel = 'total_area_ecDNA_sqrt'
-ylabel = 'MYC_mean'
-plt.subplots(figsize=(12, 9))
+color = []
 norm = mpl.colors.Normalize(vmin=10000, vmax=45000)
 mapper = cm.ScalarMappable(norm=norm, cmap=cm.Spectral_r)
 for i in range(len(hue_order)):
-    data = df[df['sample'] == hue_order[i]].copy().reset_index(drop=True)
-    if len(data) > 0:
-        number_nuclear = len(data)
-        plt.scatter(data[xlabel], data[ylabel], color=mapper.to_rgba(hue_order)[i], label='%s, n=%s' % (hue_order[i], number_nuclear))
-plt.xlabel(xlabel)
-plt.ylabel(ylabel)
-plt.legend()
-plt.savefig('%s%s_vs_%s_%s_by_MYC_group.pdf' % (output_dir, ylabel, xlabel, sample))
-plt.show()
+    color.append(mapper.to_rgba(hue_order)[i])
 
+feature = 'total_area_ecDNA_sqrt'
+sns.set_palette(sns.color_palette(color))
+plt.subplots(figsize=(12, 9))
+sns.barplot(data=df, x='sample', y=feature, hue_order=hue_order)
+plt.savefig('%s%s_by_MYC_group_%s.pdf' % (output_dir, feature, sample))
+plt.show()
