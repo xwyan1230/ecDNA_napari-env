@@ -15,7 +15,7 @@ import napari
 # INPUT PARAMETERS
 # file info
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20230119_model_clustering/"
-data_dir = "%stxt/dataset1/" % master_folder
+data_dir = "%stxt/dataset3/50/" % master_folder
 output_dir = "%sfigures2/" % master_folder
 
 samples = ['0_5', '1_5', '2_5', '5_5', '10_5', '25_5', '50_5', '75_5', '100_5', '200_5', '300_5', '400_5', '500_5', '1000_5',
@@ -47,7 +47,7 @@ for i in range(len(samples)):
     sns.scatterplot(data=data_sample, x='total_area_ecDNA_sqrt_normalized', y='dis_to_hub_area_v2_normalized', alpha=0.5, color=line_color[i],
                     label=coefficient)
 plt.xlim([0.05, 0.4])
-plt.ylim([-0.05, 1.05])
+plt.ylim([-0.05, 1.2]) # 1.05 for cen_r 0
 plt.legend()
 plt.savefig('%sdis_to_hub_area_normralized_vs_total_area_sqrt_normalized.pdf' % output_dir)
 plt.show()
@@ -56,7 +56,7 @@ plt.show()
 plt.subplots(figsize=(12, 9))
 sns.scatterplot(data=data, x='total_area_ecDNA_sqrt_normalized', y='dis_to_hub_area_v2_normalized', alpha=0.5, c=data['copy_num'])
 plt.xlim([0.05, 0.4])
-plt.ylim([-0.05, 1.05])
+plt.ylim([-0.05, 1.2])
 plt.legend()
 plt.savefig('%sdis_to_hub_area_normalized_vs_total_area_sqrt_normalized_color_by_copy_num.pdf' % output_dir)
 plt.show()
@@ -68,7 +68,7 @@ for i in range(len(samples)):
     plt.subplots(figsize=(12, 9))
     sns.scatterplot(data=data_sample, x='total_area_ecDNA_sqrt_normalized', y='dis_to_hub_area_v2_normalized', color=line_color[i])
     plt.xlim([0.05, 0.4])
-    plt.ylim([-0.05, 1.05])
+    plt.ylim([-0.05, 1.2])
     plt.savefig('%s%s_dis_to_hub_area_normalized_vs_total_area_sqrt_normalized.pdf' % (output_dir, coefficient))
     plt.close()
 

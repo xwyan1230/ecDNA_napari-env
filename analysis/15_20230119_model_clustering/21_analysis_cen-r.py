@@ -11,32 +11,34 @@ import napari
 
 # INPUT PARAMETERS
 # file info
+cen_r = 0
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20230119_model_clustering/"
-data_dir = "%ssimulated_data/dataset2_different-r-nuclear_random-radial_different-ac_cp-100/" % master_folder
-output_dir = "%stxt/dataset2/" % master_folder
+data_dir = "%ssimulated_data/dataset3_different-cp_r-75_by_different-cen-r_different-ac/%s/" % (master_folder, cen_r)
+output_dir = "%stxt/dataset3/%s/" % (master_folder, cen_r)
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
 
 sample = '0_5'
 
-r = 75
 local_size = 150
 rmax = 75
-im_test = np.zeros((2 * local_size, 2 * local_size))
-im_seg = ima.logical_ellipse(im_test, local_size, local_size, r, r)
 
-sample_folder = '%s%s/seg_tif/' % (data_dir, sample)
-FISH_imgs = [x for x in os.listdir(sample_folder)]
+sample_folder1 = '%s%s/FISH_seg_tif/' % (data_dir, sample)
+sample_folder2 = '%s%s/nuclei_seg_tif/' % (data_dir, sample)
+FISH_imgs = [x for x in os.listdir(sample_folder1)]
 if '.DS_Store' in FISH_imgs:
     FISH_imgs.remove('.DS_Store')
 
-data = pd.DataFrame(columns=['FOV', 'coefficient', 'crange', 'copy_num',
+data = pd.DataFrame(columns=['FOV', 'cen_r', 'coefficient', 'crange', 'copy_num',
                              'area_nuclear',
                              'n_ecDNA', 'total_area_ecDNA', 'total_area_ratio_ecDNA',
                              'dis_to_hub_area_v2', 'g',
                              'percentage_area_curve_ecDNA', 'cum_area_ind_ecDNA', 'radial_curve_DNAFISH'])
 
 for i in range(len(FISH_imgs)):
-    im_FISH = skio.imread("%s%s" % (sample_folder, FISH_imgs[i]), plugin="tifffile")
-    fov = FISH_imgs[i].split('_')[2]
+    im_FISH = skio.imread("%s%s" % (sample_folder1, FISH_imgs[i]), plugin="tifffile")
+    im_seg = skio.imread("%sim_seg_%s" % (sample_folder2, FISH_imgs[i][8:]), plugin="tifffile")
+    fov = FISH_imgs[i].split('_')[4]
     coefficient = sample.split('_')[0]
     crange = sample.split('_')[1]
     copy_num = FISH_imgs[i].split('_')[3].split('.')[0][2:]
@@ -100,7 +102,7 @@ for i in range(len(FISH_imgs)):
     radial_distribution_relative_r_DNAFISH = \
         ima.radial_distribution_from_distance_map(im_seg, local_relative_r_map, im_FISH, 0.05, 1)
 
-    data.loc[len(data.index)] = [fov, coefficient, crange, copy_num,
+    data.loc[len(data.index)] = [fov, cen_r, coefficient, crange, copy_num,
                                  area_nuclear,
                                  n_ecDNA, total_area_ecDNA, total_area_ratio_ecDNA,
                                  dis_to_hub_area_v2, g,

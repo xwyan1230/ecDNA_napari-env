@@ -15,16 +15,14 @@ master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20230119_model_
 data_dir = "%ssimulated_data/dataset2_different-r-nuclear_random-radial_different-ac_cp-100/" % master_folder
 output_dir = "%stxt/dataset2/" % master_folder
 
-sample = '0_5'
+sample = '5000_5'
 
-r = 75
 local_size = 150
 rmax = 75
-im_test = np.zeros((2 * local_size, 2 * local_size))
-im_seg = ima.logical_ellipse(im_test, local_size, local_size, r, r)
 
-sample_folder = '%s%s/seg_tif/' % (data_dir, sample)
-FISH_imgs = [x for x in os.listdir(sample_folder)]
+sample_folder1 = '%s%s/FISH_seg_tif/' % (data_dir, sample)
+sample_folder2 = '%s%s/nuclei_seg_tif/' % (data_dir, sample)
+FISH_imgs = [x for x in os.listdir(sample_folder1)]
 if '.DS_Store' in FISH_imgs:
     FISH_imgs.remove('.DS_Store')
 
@@ -35,7 +33,8 @@ data = pd.DataFrame(columns=['FOV', 'coefficient', 'crange', 'copy_num',
                              'percentage_area_curve_ecDNA', 'cum_area_ind_ecDNA', 'radial_curve_DNAFISH'])
 
 for i in range(len(FISH_imgs)):
-    im_FISH = skio.imread("%s%s" % (sample_folder, FISH_imgs[i]), plugin="tifffile")
+    im_FISH = skio.imread("%s%s" % (sample_folder1, FISH_imgs[i]), plugin="tifffile")
+    im_seg = skio.imread("%sim_seg_%s" % (sample_folder2, FISH_imgs[i][8:]), plugin="tifffile")
     fov = FISH_imgs[i].split('_')[2]
     coefficient = sample.split('_')[0]
     crange = sample.split('_')[1]

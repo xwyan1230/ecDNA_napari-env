@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 import scipy.stats
 
 # INPUT PARAMETERS
@@ -29,6 +30,11 @@ mu = np.mean(DM_copy)
 std = np.std(DM_copy)
 print(mu)
 print(std)
+
+plt.subplots(figsize=(12, 9))
+sns.histplot(data=data, x='DM_copy', bins=15)
+plt.savefig('%sDM_copy.pdf' % output_dir)
+plt.show()
 
 
 
