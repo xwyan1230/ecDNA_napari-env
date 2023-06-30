@@ -1,0 +1,6 @@
+ctrls1 = ['HSR_24hr*C3', 'HSR_24hr*C10', 'HSR_24hr*D6', 'HSR_24hr*F3', 'HSR_24hr*F10']
+ctrls2 = ['DM_24hr*C3', 'DM_24hr*C10', 'DM_24hr*D6', 'DM_24hr*F3', 'DM_24hr*F10']
+ctrls = ['HSR_6hr*C3', 'HSR_6hr*C10', 'HSR_6hr*D6', 'HSR_6hr*F3', 'HSR_6hr*F10']
+['DM_6hr*C3', 'DM_6hr*C10', 'DM_6hr*D6', 'DM_6hr*F3', 'DM_6hr*F10']
+['DM_2hr*C3', 'DM_2hr*C10', 'DM_2hr*D6', 'DM_2hr*F3', 'DM_2hr*F10']
+['HSR_2hr*C3', 'HSR_2hr*C10', 'HSR_2hr*D6', 'HSR_2hr*F3', 'HSR_2hr*F10']
