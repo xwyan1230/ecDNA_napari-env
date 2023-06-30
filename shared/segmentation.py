@@ -247,9 +247,232 @@ def nuclear_seg1(img: np.array, local_factor=99, clearance_threshold=300, maxima
     # separate touching nuclei
     out = obj.label_watershed(out, maxima_threshold)
     # filter smaller objects
+    out = obj.label_remove_small_large_resort(out, min_size, max_size)
+    return out
+
+
+def nuclear_seg1_print(img: np.array, local_factor=99, clearance_threshold=300, maxima_threshold=10, min_size=4000, max_size=25000):
+    """
+    Perform nuclear segmentation from a fluorescent image
+
+    tested by Paul Mischel Leica Scope
+
+    :param img: np.array
+                    fluorescent image
+    :param local_factor: int, odd number
+                    factor used to perform local thresholding
+                    for ColoDM under Paul Mischel Leica scope, 99
+    :param clearance_threshold: int
+                    threshold used to clear background
+                    default: 300
+    :param maxima_threshold: int
+                    threshold used in label_watershed
+                    for ColoDM under Paul Mischel Leica scope, 10
+    :param min_size: int
+                    minimum allowable object size
+    ;param max_size: int
+                    maximum allowable object size
+    :return: out: np.array
+                    labeled nuclear img
+    """
+    # global thresholding to determine rough location of nuclei
+    print("global thresholding ongoing...")
+    global_threshold_val = threshold_otsu(img)
+    print("global thresholding done!")
+    # determine background region
+    bg = img > global_threshold_val
+    print("local thresholding ongoing...")
+    # perform local thresholding to identify nuclei
+    local = threshold_local(img, local_factor)
+    out = img > local
+    print("local thresholding done!")
+    print("post clearence ongoing...")
+    # clear background
+    out[bg == 0] = 0
+    # one round of erosion/dilation and clearance to clear background
+    out = binary_erosion(out)
+    out = binary_dilation(out, disk(4))
+    out = obj.remove_small(out, clearance_threshold)
+    print("post clearence done!")
+    print("filling holes ongoing...")
+    # fill nuclei holes
+    out = ndimage.binary_fill_holes(out)
+    print("filling holes done!")
+    print("eliminate boundary ongoing...")
+    # eliminate nuclei that touching boundary
+    out = clear_border(out)
+    out = binary_erosion(out, disk(3))
+    print("eliminate boundary done!")
+    print("watershed separating ongoing...")
+    # separate touching nuclei
+    out = obj.label_watershed(out, maxima_threshold)
+    print("watershed separating done!")
+    print("filtration ongoing...")
+    # filter smaller objects
+    out = obj.label_remove_small_large_resort(out, min_size, max_size)
+    print("filtration done!")
+    return out
+
+
+def nuclear_seg2(img: np.array, local_factor=99, bg_thresh=500, clearance_threshold=300, maxima_threshold=10, min_size=4000, max_size=25000):
+    """
+    Perform nuclear segmentation from a fluorescent image
+
+    tested by Paul Mischel Leica Scope
+
+    :param img: np.array
+                    fluorescent image
+    :param local_factor: int, odd number
+                    factor used to perform local thresholding
+                    for ColoDM under Paul Mischel Leica scope, 99
+    ;param bg_thresh: int
+                    factor used to filter out background
+    :param clearance_threshold: int
+                    threshold used to clear background
+                    default: 300
+    :param maxima_threshold: int
+                    threshold used in label_watershed
+                    for ColoDM under Paul Mischel Leica scope, 10
+    :param min_size: int
+                    minimum allowable object size
+    ;param max_size: int
+                    maximum allowable object size
+    :return: out: np.array
+                    labeled nuclear img
+    """
+    # determine background region
+    bg = img > bg_thresh
+    # perform local thresholding to identify nuclei
+    local = threshold_local(img, local_factor)
+    out = img > local
+    # clear background
+    out[bg == 0] = 0
+    # one round of erosion/dilation and clearance to clear background
+    out = binary_erosion(out)
+    out = binary_dilation(out, disk(4))
+    out = obj.remove_small(out, clearance_threshold)
+    # fill nuclei holes
+    out = ndimage.binary_fill_holes(out)
+    # eliminate nuclei that touching boundary
+    out = clear_border(out)
+    out = binary_erosion(out, disk(3))
+    # separate touching nuclei
+    out = obj.label_watershed(out, maxima_threshold)
+    # filter smaller objects
     out = obj.label_remove_small(out, min_size)
     out = obj.label_remove_large(out, max_size)
     out = obj.label_resort(out)
+
+    return out
+
+
+def nuclear_seg2_print(img: np.array, local_factor=99, bg_thresh=500, clearance_threshold=300, maxima_threshold=10, min_size=4000, max_size=25000):
+    """
+    Perform nuclear segmentation from a fluorescent image
+
+    tested by Paul Mischel Leica Scope
+
+    :param img: np.array
+                    fluorescent image
+    :param local_factor: int, odd number
+                    factor used to perform local thresholding
+                    for ColoDM under Paul Mischel Leica scope, 99
+    ;param bg_thresh: int
+                    factor used to filter out background
+    :param clearance_threshold: int
+                    threshold used to clear background
+                    default: 300
+    :param maxima_threshold: int
+                    threshold used in label_watershed
+                    for ColoDM under Paul Mischel Leica scope, 10
+    :param min_size: int
+                    minimum allowable object size
+    ;param max_size: int
+                    maximum allowable object size
+    :return: out: np.array
+                    labeled nuclear img
+    """
+    # determine background region
+    bg = img > bg_thresh
+    print("local thresholding ongoing...")
+    # perform local thresholding to identify nuclei
+    local = threshold_local(img, local_factor)
+    out = img > local
+    print("local thresholding done!")
+    print("post clearence ongoing...")
+    # clear background
+    out[bg == 0] = 0
+    # one round of erosion/dilation and clearance to clear background
+    out = binary_erosion(out)
+    out = binary_dilation(out, disk(4))
+    out = obj.remove_small(out, clearance_threshold)
+    print("post clearence done!")
+    print("filling holes ongoing...")
+    # fill nuclei holes
+    out = ndimage.binary_fill_holes(out)
+    print("filling holes done!")
+    print("eliminate boundary ongoing...")
+    # eliminate nuclei that touching boundary
+    out = clear_border(out)
+    out = binary_erosion(out, disk(3))
+    print("eliminate boundary done!")
+    print("watershed separating ongoing...")
+    # separate touching nuclei
+    out = obj.label_watershed(out, maxima_threshold)
+    print("watershed separating done!")
+    print("filtration ongoing...")
+    # filter smaller objects
+    out = obj.label_remove_small_large_resort(out, min_size, max_size)
+    print("filtration done!")
+
+    return out
+
+
+def nuclear_seg3(img: np.array, local_factor=99, maxima_threshold=10, min_size=4000, max_size=25000):
+    """
+    Perform nuclear segmentation from a fluorescent image
+
+    tested by Paul Mischel Leica Scope
+
+    :param img: np.array
+                    fluorescent image
+    :param local_factor: int, odd number
+                    factor used to perform local thresholding
+                    for ColoDM under Paul Mischel Leica scope, 99
+    ;param bg_thresh: int
+                    factor used to filter out background
+    :param clearance_threshold: int
+                    threshold used to clear background
+                    default: 300
+    :param maxima_threshold: int
+                    threshold used in label_watershed
+                    for ColoDM under Paul Mischel Leica scope, 10
+    :param min_size: int
+                    minimum allowable object size
+    ;param max_size: int
+                    maximum allowable object size
+    :return: out: np.array
+                    labeled nuclear img
+    """
+    # determine background region
+    global_threshold_val = threshold_otsu(img)
+    bg = img > global_threshold_val
+    # perform local thresholding to identify nuclei
+    local = threshold_local(img, local_factor)
+    out = img > local
+    # clear background
+    out[bg == 0] = 0
+    # one round of erosion/dilation and clearance to clear background
+    out = binary_erosion(out)
+    out = binary_dilation(out)
+    # fill nuclei holes
+    out = ndimage.binary_fill_holes(out)
+    # eliminate nuclei that touching boundary
+    out = clear_border(out)
+    # separate touching nuclei
+    out = obj.label_watershed(out, maxima_threshold)
+    # filter smaller objects
+    out = obj.label_remove_small_large_resort(out, min_size, max_size)
 
     return out
 
@@ -558,8 +781,36 @@ def obj_to_convex_filter(img_obj: np.array, threshold=0.9):
             centroid = props[i].centroid
             centroid_convex = regionprops(label(convex_local))[0].centroid
             out = ima.image_paste_fix_value(out, convex_local, [int(centroid[0] - centroid_convex[0]),
-                                                                int(centroid[1] - centroid_convex[1])], i)
+                                                                int(centroid[1] - centroid_convex[1])], i+1)
 
+    return out
+
+
+def obj_to_convex_filter_print(img_obj: np.array, threshold=0.9):
+    """
+    Transform objects into its corresponding convex objects, only real area/convex area larger than threshold
+    will be converted
+    :param img_obj: np.array, labeled image
+    :param threshold: used to filter ratio between real area/convex area, smaller than threshold will not be
+                    converted into convex
+    :return:
+    """
+    print("object to convex ongoing...")
+    out = np.zeros_like(img_obj)
+    props = regionprops(img_obj)
+    count = 1
+    for i in range(len(props)):
+        if i % 100 == 0:
+            print("%s/%s" % (i, len(props)))
+        convex_local = props[i].convex_image
+        area_ratio = props[i].area/convex_local.sum()
+        if area_ratio > threshold:
+            centroid = props[i].centroid
+            centroid_convex = regionprops(label(convex_local))[0].centroid
+            out = ima.image_paste_fix_value(out, convex_local, [int(centroid[0] - centroid_convex[0]),
+                                                                int(centroid[1] - centroid_convex[1])], count)
+            count = count + 1
+    print("object to convex done!")
     return out
 
 
@@ -731,3 +982,42 @@ def puncta_seg(img: np.array, nuclear_seg: np.array, local_size: int, local_cycl
                                          [int(original_centroid_nuclear[0] - local_centroid[0]),
                                           int(original_centroid_nuclear[1] - local_centroid[1])])
     return img_seg
+
+
+def seg_combination(img: np.array, img_add: np.array):
+    out = img.copy()
+    count = img.max()+1
+    print(count)
+    add_props = regionprops(img_add, img)
+    for i in range(len(add_props)):
+        if i % 100 == 0:
+            print("%s/%s" % (i, len(add_props)))
+        img_index = img[int(add_props[i].centroid[0])][int(add_props[i].centroid[1])]
+        if add_props[i].intensity_mean == 0:
+            out[img_add == add_props[i].label] = count
+            count = count + 1
+            print('add')
+            """viewer = napari.Viewer()
+            viewer.add_image(img, blending='additive', colormap='blue', contrast_limits=[0, 1])
+            viewer.add_image(img_add, blending='additive', colormap='red', contrast_limits=[0, 1])
+            viewer.add_image(out, blending='additive', colormap='green', contrast_limits=[0, 1])
+            napari.run()"""
+        elif img_index == 0:
+            out[(img_add == add_props[i].label) & (img == 0)] = count
+            count = count + 1
+            print('add')
+            """viewer = napari.Viewer()
+            viewer.add_image(img, blending='additive', colormap='blue', contrast_limits=[0, 1])
+            viewer.add_image(img_add, blending='additive', colormap='red', contrast_limits=[0, 1])
+            viewer.add_image(out, blending='additive', colormap='green', contrast_limits=[0, 1])
+            napari.run()"""
+        else:
+            img_area = np.count_nonzero(img == img_index)
+            add_area = add_props[i].area
+            if add_area < img_area*0.8:
+                out[img == img_index] = 0
+                out[img_add == add_props[i].label] = img_index
+                print('%s, %s, replace' % (img_area, add_area))
+            else:
+                print('%s, %s, keep' % (img_area, add_area))
+    return out

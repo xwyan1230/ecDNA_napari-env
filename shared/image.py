@@ -4,6 +4,7 @@ from skimage.morphology import binary_dilation, binary_erosion, disk
 import shared.objects as obj
 import random
 from matplotlib.path import Path
+import imutils
 import shared.dataframe as dat
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -545,3 +546,124 @@ def img_background_correction(img: np.array, bg_int: float):
     return out
 
 
+def img_align_move(img1: np.array, img2: np.array, rotate_a, topleft_target):
+    img1_out = img1.copy()
+    img1_temp = imutils.rotate(img1_out, angle=rotate_a[0])
+    img1_out = img1_temp
+    img2_out = img2.copy()
+    img2_temp = imutils.rotate(img2_out, angle=rotate_a[1])
+    img2_out = img2_temp
+    if topleft_target[0] > 0:
+        img2_temp = np.concatenate([np.zeros(shape=[img2_out.shape[0], abs(int(topleft_target[0]))]), img2_out], axis=1)
+        img2_out = img2_temp
+    else:
+        img1_temp = np.concatenate([np.zeros(shape=[img1_out.shape[0], abs(int(topleft_target[0]))]), img1_out], axis=1)
+        img1_out = img1_temp
+    if topleft_target[1] > 0:
+        img2_temp = np.concatenate([np.zeros(shape=[abs(int(topleft_target[1])), img2_out.shape[1]]), img2_out], axis=0)
+        img2_out = img2_temp
+    else:
+        img1_temp = np.concatenate([np.zeros(shape=[abs(int(topleft_target[1])), img1_out.shape[1]]), img1_out], axis=0)
+        img1_out = img1_temp
+    img1_out, img2_out = img_same_size(img1_out, img2_out)
+    return img1_out, img2_out
+
+
+def img_search_global(img: np.array, img_search: np.array, poly_data, interval):
+    topleft_ori = [poly_data[0][1], poly_data[0][0]]
+    xrange = poly_data[1][1] - poly_data[0][1]
+    yrange = poly_data[2][0] - poly_data[0][0]
+
+    min_ratio = 1
+    topleft_target = topleft_ori
+    i = 0
+    for x in range(int(xrange / interval)):
+        for y in range(int(yrange / interval)):
+            i = i + 1
+            topleft = [topleft_ori[0] + x * interval, topleft_ori[1] + y * interval]
+            img_cut = img.copy()
+            img_cut = img_cut[int(topleft[1]):int(topleft[1] + img_search.shape[0]),
+                      int(topleft[0]):int(topleft[0] + img_search.shape[1])]
+
+            minus = img_search.astype(float) - img_cut.astype(float)
+            minus[minus < 0] = 0
+            min_ratio_temp = minus.sum() / img_search.sum()
+            print('%s/%s: %s' % (i, int(xrange / interval) * int(yrange / interval), min_ratio_temp))
+            if min_ratio_temp < min_ratio:
+                min_ratio = min_ratio_temp
+                topleft_target = [topleft_ori[0] + x * interval, topleft_ori[1] + y * interval]
+    print(min_ratio)
+    print(topleft_target)
+    return topleft_target, min_ratio
+
+
+def img_search_local(img: np.array, img_search: np.array, topleft_center, interval):
+    topleft_ori = [topleft_center[0] - 10*interval, topleft_center[1]-10*interval]
+    xrange = 20 * interval
+    yrange = 20 * interval
+
+    min_ratio = 1
+    topleft_target = topleft_ori
+    i = 0
+    for x in range(int(xrange / interval)):
+        for y in range(int(yrange / interval)):
+            i = i + 1
+            topleft = [topleft_ori[0] + x * interval, topleft_ori[1] + y * interval]
+            img_cut = img.copy()
+            img_cut = img_cut[int(topleft[1]):int(topleft[1] + img_search.shape[0]),
+                      int(topleft[0]):int(topleft[0] + img_search.shape[1])]
+
+            minus = img_search.astype(float) - img_cut.astype(float)
+            minus[minus < 0] = 0
+            min_ratio_temp = minus.sum() / img_search.sum()
+            print('%s/%s: %s' % (i, int(xrange / interval) * int(yrange / interval), min_ratio_temp))
+            if min_ratio_temp < min_ratio:
+                min_ratio = min_ratio_temp
+                topleft_target = [topleft_ori[0] + x * interval, topleft_ori[1] + y * interval]
+    print(min_ratio)
+    print(topleft_target)
+    return topleft_target, min_ratio
+
+
+def img_same_size(img1: np.array, img2: np.array):
+    shape_diff = [img1.shape[0] - img2.shape[0], img1.shape[1] - img2.shape[1]]
+    img2_out = img2.copy()
+    img1_out = img1.copy()
+    if shape_diff[0] > 0:
+        img2_temp = np.concatenate([img2_out, np.zeros(shape=[abs(int(shape_diff[0])), img2_out.shape[1]])], axis=0)
+        img2_out = img2_temp
+    else:
+        img1_temp = np.concatenate([img1_out, np.zeros(shape=[abs(int(shape_diff[0])), img1_out.shape[1]])], axis=0)
+        img1_out = img1_temp
+    if shape_diff[1] > 0:
+        img2_temp = np.concatenate([img2_out, np.zeros(shape=[img2_out.shape[0], abs(int(shape_diff[1]))])], axis=1)
+        img2_out = img2_temp
+    else:
+        img1_temp = np.concatenate([img1_out, np.zeros(shape=[img1_out.shape[0], abs(int(shape_diff[1]))])], axis=1)
+        img1_out = img1_temp
+    return img1_out, img2_out
+
+
+def img_search_global10(img: np.array, img_search: np.array, poly_data, interval):
+    topleft_ori = [poly_data[0][1], poly_data[0][0]]
+    xrange = poly_data[1][1] - poly_data[0][1]
+    yrange = poly_data[2][0] - poly_data[0][0]
+
+    min_ratio = []
+    topleft_target = []
+    i = 0
+    for x in range(int(xrange / interval)):
+        for y in range(int(yrange / interval)):
+            i = i + 1
+            topleft = [topleft_ori[0] + x * interval, topleft_ori[1] + y * interval]
+            img_cut = img.copy()
+            img_cut = img_cut[int(topleft[1]):int(topleft[1] + img_search.shape[0]),
+                      int(topleft[0]):int(topleft[0] + img_search.shape[1])]
+
+            minus = img_search.astype(float) - img_cut.astype(float)
+            minus[minus < 0] = 0
+            min_ratio_temp = minus.sum() / img_search.sum()
+            print('%s/%s: %s' % (i, int(xrange / interval) * int(yrange / interval), min_ratio_temp))
+            min_ratio.append(min_ratio_temp)
+            topleft_target.append([topleft_ori[0] + x * interval, topleft_ori[1] + y * interval])
+    return topleft_target[:10], min_ratio[:10]

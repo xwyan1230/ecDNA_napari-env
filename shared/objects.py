@@ -185,6 +185,30 @@ def label_remove_small(label_obj: np.array, min_size: int):
     return out
 
 
+def label_remove_small_large_resort(label_obj: np.array, min_size: int, max_size: int):
+    """
+        Remove objects smaller or larger than the specified size from labeled image and sort objects
+
+        :param label_obj: np.array, grey scale labeled image
+        :param min_size: int
+                    The smallest allowable object size
+        :param max_size: int
+                    The largest allowable object size
+        :return: out: np.array, grey scale labeled image with small objects removed
+        """
+    count = 1
+    out = np.zeros_like(label_obj)
+    obj_prop = regionprops(label_obj)
+    for i in range(len(obj_prop)):
+        """if i % 100 == 0:
+            print("%s/%s" % (i, len(obj_prop)))"""
+        if (obj_prop[i].area >= min_size) & (obj_prop[i].area <= max_size):
+            out[label_obj == obj_prop[i].label] = count
+            count = count + 1
+
+    return out
+
+
 def label_remove_low_circ(label_obj: np.array, thresh: float):
     """
     Remove objects whose circularity are smaller than the specified threshold from labeled image
@@ -251,6 +275,26 @@ def label_resort(label_obj: np.array):
             label_out[label_obj == i + 1] = count
             count = count + 1
 
+    return label_out
+
+
+def label_resort_print(label_obj: np.array):
+    """
+    Re-label random labeled image into sequential labeled image.
+
+    :param label_obj: np.array, grey scale labeled image
+    :return: label_out: np.array, sorted grey scale labeled image
+    """
+    print("label resort ongoing...")
+    count = 1
+    label_out = np.zeros_like(label_obj)
+    for i in range(np.amax(label_obj)):
+        temp = np.zeros_like(label_obj)
+        temp[label_obj == i + 1] = 1
+        if object_count(temp) > 0:
+            label_out[label_obj == i + 1] = count
+            count = count + 1
+    print("label resort done!")
     return label_out
 
 

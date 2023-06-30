@@ -18,9 +18,9 @@ n_nuclear_convex_dilation = -3
 
 # samples
 exp1 = 'HSR_2hr'
-exp2 = 'HSR_6hr'
+exp2 = 'DM_2hr'
 ctrls1 = ['HSR_2hr*C3', 'HSR_2hr*C10', 'HSR_2hr*D6', 'HSR_2hr*F3', 'HSR_2hr*F10']
-ctrls2 = ['HSR_6hr*C3', 'HSR_6hr*C10', 'HSR_6hr*D6', 'HSR_6hr*F3', 'HSR_6hr*F10']
+ctrls2 = ['DM_2hr*C3', 'DM_2hr*C10', 'DM_2hr*D6', 'DM_2hr*F3', 'DM_2hr*F10']
 features = ['mean_int_MYC_mean']
 
 # load data
