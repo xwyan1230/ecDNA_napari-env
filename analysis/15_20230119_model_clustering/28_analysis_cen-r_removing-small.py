@@ -14,7 +14,7 @@ import napari
 cen_r = 60
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20230119_model_clustering/"
 data_dir = "%ssimulated_data/dataset5_different-cp0-100_r-75_cen_r-60_by_different-ac/%s/" % (master_folder, cen_r)
-output_dir = "%stxt/dataset5/%s_with-small/" % (master_folder, cen_r)
+output_dir = "%stxt/dataset5/%s/" % (master_folder, cen_r)
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
@@ -36,13 +36,20 @@ data = pd.DataFrame(columns=['FOV', 'cen_r', 'coefficient', 'crange', 'copy_num'
                              'percentage_area_curve_ecDNA', 'cum_area_ind_ecDNA', 'radial_curve_DNAFISH'])
 
 for i in range(len(FISH_imgs)):
-    im_FISH = skio.imread("%s%s" % (sample_folder1, FISH_imgs[i]), plugin="tifffile")
+    im_FISH_temp = skio.imread("%s%s" % (sample_folder1, FISH_imgs[i]), plugin="tifffile")
     im_seg = skio.imread("%sim_seg_%s" % (sample_folder2, FISH_imgs[i][8:]), plugin="tifffile")
     fov = FISH_imgs[i].split('_')[4]
     coefficient = sample.split('_')[0]
     crange = sample.split('_')[1]
     copy_num = FISH_imgs[i].split('_')[5].split('.')[0][2:]
     print('sample: %s, cell: %s, copy number: %s' % (sample, i, copy_num))
+
+    im_FISH = np.zeros_like(im_FISH_temp)
+    out_label = label(im_FISH_temp)
+    out_props = regionprops(out_label)
+    for j in range(len(out_props)):
+        if out_props[j].area > 15:
+            im_FISH[out_label == out_props[j].label] = 1
 
     # measure
     area_nuclear = np.sum(im_seg)

@@ -17,7 +17,7 @@ import napari
 # file info
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20230119_model_clustering/"
 data_dir = "%stxt/dataset3/" % master_folder
-output_dir = "%sfigures1/" % master_folder
+output_dir = "%sfigures3/" % master_folder
 
 groups = [0, 10, 20, 30, 40, 50, 60, 70]
 samples = ['0_5', '1_5', '2_5', '5_5', '10_5', '25_5', '50_5', '75_5', '100_5', '200_5', '300_5', '400_5', '500_5', '1000_5',
@@ -32,6 +32,7 @@ b_intercept = [[] for _ in range(len(samples))]
 zero_percent = [[] for _ in range(len(samples))]
 total_area = [[] for _ in range(len(samples))]
 dis_to_hub_area = [[] for _ in range(len(samples))]
+dis_to_hub_area_std = [[] for _ in range(len(samples))]
 
 for j in range(len(samples)):
     for k in range(len(groups)):
@@ -48,6 +49,7 @@ for j in range(len(samples)):
 
         data_sample = data
         dis_to_hub_area[j].append(np.mean(data_sample['dis_to_hub_area_v2_normalized']))
+        dis_to_hub_area_std[j].append(np.std(data_sample['dis_to_hub_area_v2_normalized']))
         mean_curve, ci_lower, ci_higher = dat.mean_list(data_sample['g'].tolist())
         g1[j].append(mean_curve[1])
         g20[j].append(mean_curve[20])
@@ -70,6 +72,14 @@ df.index = samples
 plt.subplots(figsize=(12, 9))
 sns.heatmap(df)
 plt.savefig('%s2d_dis_to_hub_area.pdf' % output_dir)
+plt.show()
+
+df = pd.DataFrame(dis_to_hub_area_std)
+df.columns = groups
+df.index = samples
+plt.subplots(figsize=(12, 9))
+sns.heatmap(df)
+plt.savefig('%s2d_dis_to_hub_area_std.pdf' % output_dir)
 plt.show()
 
 df = pd.DataFrame(g1)

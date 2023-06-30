@@ -83,7 +83,7 @@ def blending(view):
 # file info
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20230119_model_clustering/"
 data_dir = "%s" % master_folder
-output_dir = "%s" % master_folder
+output_dir = "%ssimulated_data/dataset5_different-cp0-100_r-75_cen_r-0_by_different-ac/" % master_folder
 
 r = 75
 local_size = 150

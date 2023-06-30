@@ -90,7 +90,7 @@ print(cen_r)
 # file info
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20230119_model_clustering/"
 data_dir = "%s" % master_folder
-output_dir = "%ssimulated_data/dataset3_different-cp_r-75_by_different-cen-r_different-ac/%s/" % (master_folder, cen_r)
+output_dir = "%ssimulated_data/dataset5_different-cp0-100_r-75_cen_r-60_by_different-ac/%s/" % (master_folder, cen_r)
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
@@ -107,7 +107,7 @@ p_list = im_sampling.flatten()
 p_coordinate = return_xy(2 * local_size)
 p_dict = dict(zip(p_coordinate, p_list))
 
-copy_num = random.choices(np.arange(20, 200, 1), k=1)[0]
+copy_num = random.choices(np.arange(0, 100, 1), k=1)[0]
 
 random_ones = []
 for i in range(copy_num):

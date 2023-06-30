@@ -16,7 +16,7 @@ import napari
 # INPUT PARAMETERS
 # file info
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20230119_model_clustering/"
-data_dir = "%stxt/" % master_folder
+data_dir = "%stxt/dataset4/" % master_folder
 output_dir = "%sfigures4/" % master_folder
 
 samples = ['0_5', '1_5', '2_5', '5_5', '10_5', '25_5', '50_5', '75_5', '100_5', '200_5', '300_5', '400_5', '500_5', '1000_5',
