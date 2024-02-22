@@ -15,7 +15,7 @@ master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20230609_analys
 data_dir = "%sfigures/" % master_folder
 output_dir = "%sfigures/" % master_folder
 
-row_lst = ['C', 'D']
+row_lst = ['C', 'D', 'E', 'F', 'G']
 column_lst = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 
 plt.subplots(figsize=(9, 6))

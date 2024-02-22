@@ -12,10 +12,10 @@ master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20230609_analys
 data_dir = "%sdata/" % master_folder
 output_dir = "%sdata/" % master_folder
 
-row = 'E2'
-sample = 'E9'
+row = 'G'
+sample = 'G9'
 dshape_factor = 0.2349  # 766nm for Keyence 10x, 360nm for 512x512 at 63x, 58.6 for 3144x3144 at 63x (0.0765), 180 for 1024x1024 at 63x (0.2349)
-topleft_target = [2669.809832663499, 6227.967128198135]
+topleft_target = [3311.4535513688943, 6905.216405179622]
 border = 50
 
 img_before_GFP = skio.imread("%s/beforeFISH/%s/%s_GFP_final.tif" % (data_dir, sample, sample), plugin="tifffile")

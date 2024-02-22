@@ -17,8 +17,8 @@ data_dir1 = "%sfigures/" % master_folder
 output_dir = "%sfigures/" % master_folder
 
 exp = '20230512_mixing_Wee1-BRD4_6hr'
-sample = '10_BRD4-GFP-6hr_Ctrl-mCh-6hr'
-batch = 2
+sample = '5_Ctrl-GFP-6hr_Wee1-mCh-6hr'
+batch = 1
 img_hoechst_stack = skio.imread("%s%s/%s_%s_%s_50pos_RAW_ch00.tif" % (data_dir, sample, exp, sample, batch), plugin="tifffile")
 img_DNAFISH_stack = skio.imread("%s%s/%s_%s_%s_50pos_RAW_ch01.tif" % (data_dir, sample, exp, sample, batch), plugin="tifffile")
 

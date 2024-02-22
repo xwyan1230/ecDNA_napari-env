@@ -22,9 +22,9 @@ data_dir1 = "%sfigures/" % master_folder
 output_dir = "%sfigures/" % master_folder
 
 exp = '20230512_mixing_Wee1-BRD4_6hr'
-sample = '10_BRD4-GFP-6hr_Ctrl-mCh-6hr'
+sample = '2_Ctrl-GFP-6hr_Ctrl-mCh-6hr'
 
-df = pd.read_csv('%s%s/%s_n4.txt' % (data_dir1, sample, sample), na_values=['.'], sep='\t')
+df = pd.read_csv('%s%s/%s_n4_new.txt' % (data_dir1, sample, sample), na_values=['.'], sep='\t')
 df_label = pd.read_csv('%s%s/alignment_label.txt' % (data_dir1, sample), na_values=['.'], sep='\t')
 df_keyence = pd.read_csv('%s%s/analysis_keyence.txt' % (data_dir1, sample), na_values=['.'], sep='\t')
 
@@ -46,5 +46,5 @@ df_sort['mean_int_GFP'] = int_GFP
 df_sort['mean_int_mCherry'] = int_mCherry
 df_sort['group'] = group
 
-df_sort.to_csv('%s%s/%s_summary.txt' % (output_dir, sample, sample), index=False, sep='\t')
+df_sort.to_csv('%s%s/%s_summary_new.txt' % (output_dir, sample, sample), index=False, sep='\t')
 print("DONE!")

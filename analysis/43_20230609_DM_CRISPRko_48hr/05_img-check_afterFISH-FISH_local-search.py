@@ -11,11 +11,11 @@ master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20230609_analys
 data_dir = "%sdata/" % master_folder
 output_dir = "%salignment/" % master_folder
 
-row = 'E2'
-sample = 'E9'
+row = 'G'
+sample = 'G9'
 dshape_factor = 0.2349  # 766nm for Keyence 10x, 360nm for 512x512 at 63x, 58.6 for 3144x3144 at 63x (0.0765), 180 for 1024x1024 at 63x (0.2349)
 interval = 5
-topleft_target = [2679.809832663499, 6232.967128198135]
+topleft_target = [3306.4535513688943, 6890.216405179622]
 
 # img
 # filename = '20230601_CRISPRko_48hr_DNAFISH_%s_%s_scan_1024_Merging_001_ch00' % (row, sample)

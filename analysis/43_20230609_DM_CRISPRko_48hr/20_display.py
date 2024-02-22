@@ -19,8 +19,8 @@ data_dir = "%sdata/" % master_folder
 data_dir1 = "%sfigures/" % master_folder
 output_dir = "%sdata/" % master_folder
 
-row = 'D'
-sample = 'D11'
+row = 'C'
+sample = 'C3'
 hue_order = ['GFP', 'mCherry']
 df = pd.read_csv('%s/%s/%s_n4_simplified.txt' % (data_dir1, sample, sample), na_values=['.'], sep='\t')
 df['r'] = np.sqrt(df['area_nuclear']/math.pi)

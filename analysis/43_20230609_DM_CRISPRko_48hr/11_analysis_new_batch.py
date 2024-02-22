@@ -20,8 +20,8 @@ output_dir = "%sfigures/" % master_folder
 
 row = 'C'
 sample = 'C3'
-batch = 1
-total_fov = 4
+batch = 2
+total_fov = 12
 dshape_factor = 0.0765
 n_nuclear_convex_dilation = 4
 local_size = 200
@@ -49,6 +49,7 @@ data = pd.DataFrame(columns=['nuclear', 'FOV', 'label',
                              'total_area_ecDNA', 'total_area_ratio_ecDNA',
                              'dis_to_hub_area',
                              'radial_curve_nuclear', 'radial_curve_DNAFISH',
+                             'radial_curve_edge_nuclear', 'radial_curve_edge_DNAFISH',
                              'percentage_area_curve_ecDNA', 'percentage_area_n_half',
                              'percentage_area_ratio_curve_ecDNA', 'percentage_area_ratio_n_half',
                              'percentage_int_curve_ecDNA', 'percentage_int_n_half',
@@ -61,7 +62,7 @@ for f in range(total_fov):
     fov = f + start_fov
     print(fov)
     if fov < 10:
-        filename = '20230601_CRISPRko_48hr_DNAFISH_%s_%s_4pos_s%s' % (row, sample, fov)
+        filename = '20230601_CRISPRko_48hr_DNAFISH_%s_%s_12pos_s0%s' % (row, sample, fov)
     else:
         filename = '20230601_CRISPRko_48hr_DNAFISH_%s_%s_12pos_s%s' % (row, sample, fov)
     img_nuclear_bgc = skio.imread("%s/FISH/%s/%s_ch01.tif" % (data_dir, sample, filename), plugin="tifffile")
@@ -224,12 +225,19 @@ for f in range(total_fov):
         local_relative_r_map = local_centroid_distance_map / (
                 local_centroid_distance_map + local_edge_distance_map)
 
+        radial_distribution_edge_DNAFISH = ima.radial_distribution_from_distance_map(local_nuclear_seg,
+                                                                                     local_edge_distance_map,
+                                                                                     local_DNAFISH, 2.5, 100)
+        radial_distribution_edge_nuclear = ima.radial_distribution_from_distance_map(local_nuclear_seg,
+                                                                                     local_edge_distance_map,
+                                                                                     local_nuclear, 2.5, 100)
+
         radial_distribution_relative_r_DNAFISH = \
             ima.radial_distribution_from_distance_map(local_nuclear_seg, local_relative_r_map,
-                                                      local_DNAFISH, 0.05, 1)
+                                                      local_DNAFISH, 0.025, 1)
         radial_distribution_relative_r_nuclear = \
             ima.radial_distribution_from_distance_map(local_nuclear_seg, local_relative_r_map,
-                                                      local_nuclear, 0.05, 1)
+                                                      local_nuclear, 0.025, 1)
 
         data.loc[len(data.index)] = [i, fov, label_nuclear,
                                      n_nuclear_convex_dilation,
@@ -240,6 +248,7 @@ for f in range(total_fov):
                                      total_area_ecDNA, total_area_ratio_ecDNA,
                                      dis_to_hub_area_v2,
                                      radial_distribution_relative_r_nuclear, radial_distribution_relative_r_DNAFISH,
+                                     radial_distribution_edge_nuclear, radial_distribution_edge_DNAFISH,
                                      cum_percentage_area_ind_ecDNA, cum_percentage_area_n_half,
                                      cum_percentage_area_ratio_ind_ecDNA, cum_percentage_area_ratio_n_half,
                                      cum_percentage_total_int_ind_ecDNA, cum_percentage_total_int_n_half,

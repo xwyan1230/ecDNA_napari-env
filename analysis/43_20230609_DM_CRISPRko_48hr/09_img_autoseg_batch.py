@@ -23,6 +23,7 @@ row = 'C'
 sample = 'C3'
 batch = 2
 total_fov = 12
+start_fov = 10
 pixel_size = 58.7  # nm (sp8 confocal 3144x3144)
 cell_avg_size = 10  # um (Colo)
 nuclear_size_range = [0.6, 1.5]  # used to filter nucleus
@@ -32,7 +33,8 @@ local_factor_nuclear = 99  # ~99, needs to be odd number, rmax if (rmax % 2 == 1
 min_size_nuclear = (nuclear_size_range[0] * cell_avg_size * 1000 / (pixel_size * 2)) ** 2 * math.pi
 max_size_nuclear = (nuclear_size_range[1] * cell_avg_size * 1000 / (pixel_size * 2)) ** 2 * math.pi
 
-for fov in range(total_fov):
+for f in range(total_fov):
+    fov = start_fov + f
     print(fov)
     if fov < 10:
         filename = '20230601_CRISPRko_48hr_DNAFISH_%s_%s_12pos_s0%s' % (row, sample, fov)
@@ -54,7 +56,7 @@ for fov in range(total_fov):
     # ecDNA segmentation
     img_DNAFISH_seg1 = np.zeros_like(img_DNAFISH)
     img_DNAFISH_seg1[img_DNAFISH > 12000] = 1
-    img_DNAFISH_seg1 = obj.remove_small(img_DNAFISH_seg1, 20)
+    img_DNAFISH_seg1 = obj.remove_small(img_DNAFISH_seg1, 6)
 
     tif.imwrite("%sseg/%s/seg_tif/%s_%s_%s_ecseg1.tif" % (output_dir, sample, sample, batch, fov), img_DNAFISH_seg1)
 

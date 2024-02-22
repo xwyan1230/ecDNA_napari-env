@@ -17,8 +17,8 @@ master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20230609_analys
 data_dir = "%sdata/" % master_folder
 output_dir = "%sfigures/" % master_folder
 
-row = 'E2'
-sample = 'E9'
+row = 'C'
+sample = 'C6'
 total_fov = 16
 dshape_factor = 0.0765
 n_nuclear_convex_dilation = 4
@@ -35,11 +35,11 @@ for f in range(total_fov):
     fov = f + start_fov
     print(fov)
     if fov < 10:
-        # filename = '20230601_CRISPRko_48hr_DNAFISH_%s_%s_s0%s' % (row, sample, fov)
-        filename = '20230602_DM_CRISPRko_48hr_DNAFISH_%s_%s_s0%s' % (row, sample, fov)
+        filename = '20230601_CRISPRko_48hr_DNAFISH_%s_%s_s0%s' % (row, sample, fov)
+        # filename = '20230602_DM_CRISPRko_48hr_DNAFISH_%s_%s_s0%s' % (row, sample, fov)
     else:
-        # filename = '20230601_CRISPRko_48hr_DNAFISH_%s_%s_s%s' % (row, sample, fov)
-        filename = '20230602_DM_CRISPRko_48hr_DNAFISH_%s_%s_s%s' % (row, sample, fov)
+        filename = '20230601_CRISPRko_48hr_DNAFISH_%s_%s_s%s' % (row, sample, fov)
+        # filename = '20230602_DM_CRISPRko_48hr_DNAFISH_%s_%s_s%s' % (row, sample, fov)
     img_nuclear_bgc = skio.imread("%s/FISH/%s/%s_ch01.tif" % (data_dir, sample, filename), plugin="tifffile")
     img_DNAFISH_bgc = skio.imread("%s/FISH/%s/%s_ch00.tif" % (data_dir, sample, filename), plugin="tifffile")
     s = img_nuclear_bgc.shape[0]*dshape_factor

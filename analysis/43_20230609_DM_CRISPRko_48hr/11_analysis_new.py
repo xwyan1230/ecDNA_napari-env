@@ -18,8 +18,8 @@ master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20230609_analys
 data_dir = "%sdata/" % master_folder
 output_dir = "%sfigures/" % master_folder
 
-row = 'E2'
-sample = 'E9'
+row = 'D'
+sample = 'D7'
 total_fov = 16
 dshape_factor = 0.0765
 n_nuclear_convex_dilation = 4
@@ -48,6 +48,7 @@ data = pd.DataFrame(columns=['nuclear', 'FOV', 'label',
                              'total_area_ecDNA', 'total_area_ratio_ecDNA',
                              'dis_to_hub_area',
                              'radial_curve_nuclear', 'radial_curve_DNAFISH',
+                             'radial_curve_edge_nuclear', 'radial_curve_edge_DNAFISH',
                              'percentage_area_curve_ecDNA', 'percentage_area_n_half',
                              'percentage_area_ratio_curve_ecDNA', 'percentage_area_ratio_n_half',
                              'percentage_int_curve_ecDNA', 'percentage_int_n_half',
@@ -60,11 +61,11 @@ for f in range(total_fov):
     fov = f + start_fov
     print(fov)
     if fov < 10:
-        # filename = '20230601_CRISPRko_48hr_DNAFISH_%s_%s_s0%s' % (row, sample, fov)
-        filename = '20230602_DM_CRISPRko_48hr_DNAFISH_%s_%s_s0%s' % (row, sample, fov)
+        filename = '20230601_CRISPRko_48hr_DNAFISH_%s_%s_lowQualityInGeneral_s0%s' % (row, sample, fov)
+        # filename = '20230602_DM_CRISPRko_48hr_DNAFISH_%s_%s_s0%s' % (row, sample, fov)
     else:
-        # filename = '20230601_CRISPRko_48hr_DNAFISH_%s_%s_s%s' % (row, sample, fov)
-        filename = '20230602_DM_CRISPRko_48hr_DNAFISH_%s_%s_s%s' % (row, sample, fov)
+        filename = '20230601_CRISPRko_48hr_DNAFISH_%s_%s_lowQualityInGeneral_s%s' % (row, sample, fov)
+        # filename = '20230602_DM_CRISPRko_48hr_DNAFISH_%s_%s_s%s' % (row, sample, fov)
     img_nuclear_bgc = skio.imread("%s/FISH/%s/%s_ch01.tif" % (data_dir, sample, filename), plugin="tifffile")
     img_DNAFISH_bgc = skio.imread("%s/FISH/%s/%s_ch00.tif" % (data_dir, sample, filename), plugin="tifffile")
     img_seg = skio.imread("%s/seg/%s/seg_tif/%s_%s_seg.tif" % (data_dir, sample, sample, fov),
@@ -225,12 +226,18 @@ for f in range(total_fov):
         local_relative_r_map = local_centroid_distance_map / (
                 local_centroid_distance_map + local_edge_distance_map)
 
+        radial_distribution_edge_DNAFISH = ima.radial_distribution_from_distance_map(local_nuclear_seg, local_edge_distance_map,
+                                                      local_DNAFISH, 2.5, 100)
+        radial_distribution_edge_nuclear = ima.radial_distribution_from_distance_map(local_nuclear_seg,
+                                                                                     local_edge_distance_map,
+                                                                                     local_nuclear, 2.5, 100)
+
         radial_distribution_relative_r_DNAFISH = \
             ima.radial_distribution_from_distance_map(local_nuclear_seg, local_relative_r_map,
-                                                      local_DNAFISH, 0.05, 1)
+                                                      local_DNAFISH, 0.025, 1)
         radial_distribution_relative_r_nuclear = \
             ima.radial_distribution_from_distance_map(local_nuclear_seg, local_relative_r_map,
-                                                      local_nuclear, 0.05, 1)
+                                                      local_nuclear, 0.025, 1)
 
         data.loc[len(data.index)] = [i, fov, label_nuclear,
                                      n_nuclear_convex_dilation,
@@ -241,6 +248,7 @@ for f in range(total_fov):
                                      total_area_ecDNA, total_area_ratio_ecDNA,
                                      dis_to_hub_area_v2,
                                      radial_distribution_relative_r_nuclear, radial_distribution_relative_r_DNAFISH,
+                                     radial_distribution_edge_nuclear, radial_distribution_edge_DNAFISH,
                                      cum_percentage_area_ind_ecDNA, cum_percentage_area_n_half,
                                      cum_percentage_area_ratio_ind_ecDNA, cum_percentage_area_ratio_n_half,
                                      cum_percentage_total_int_ind_ecDNA, cum_percentage_total_int_n_half,

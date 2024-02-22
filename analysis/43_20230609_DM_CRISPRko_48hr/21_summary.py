@@ -19,14 +19,20 @@ n_dilation = 4
 limit = 100
 
 # samples
-sample = 'E9'
+sample = 'G7'
 hue_order = ['GFP', 'mCherry']
 
 data = pd.DataFrame(columns=['sample', 'limit',  'n',
                              'mean_area_nuclear', 'mean_total_area_ecDNA', 'mean_total_area_ratio_ecDNA', 'mean_mean_int_DNAFISH',
-                             'mean_r10', 'mean_r16', 'mean_n_ecDNA',
-                             'n_point2', 'mean_r10_point2', 'mean_r16_point2',
-                             'mean_averageD_point2', 'std_averageD_point2', 'mean_n_ecDNA_point2', 'per_n_ecDNA10_point2'])
+                             'mean_r1', 'mean_r2', 'mean_r3', 'mean_e1', 'mean_e2', 'mean_e3', 'mean_n_ecDNA',
+                             'n_point2', 'mean_averageD_point2', 'std_averageD_point2', 'mean_n_ecDNA_point2', 'per_n_ecDNA10_point2'])
+
+r1 = 23
+r2 = 34
+r3 = 37
+e1 = 2
+e2 = 5
+e3 = 14
 
 
 def get_minuslnp(data1: pd.DataFrame, data2: pd.DataFrame, feature: str, limit: int, repeat: int):
@@ -40,7 +46,7 @@ def get_minuslnp(data1: pd.DataFrame, data2: pd.DataFrame, feature: str, limit: 
 
 
 df = pd.read_csv('%s/%s/%s_n4_simplified.txt' % (data_dir, sample, sample), na_values=['.'], sep='\t')
-feature = ['radial_curve_DNAFISH']
+feature = ['radial_curve_DNAFISH', 'radial_curve_edge_DNAFISH']
 for f in feature:
     df[f] = [dat.str_to_float(df[f][i]) for i in range(len(df))]
 df['r'] = np.sqrt(df['area_nuclear']/math.pi)
@@ -68,18 +74,38 @@ p_mean_int_DNAFISH = get_minuslnp(df_GFP, df_mCherry, 'mean_int_DNAFISH', limit,
 
 n_GFP = len(df_GFP)
 n_mCherry = len(df_mCherry)
-r10_GFP = [df_GFP['radial_curve_DNAFISH'][i][10] for i in range(len(df_GFP))]
-r10_mCherry = [df_mCherry['radial_curve_DNAFISH'][i][10] for i in range(len(df_mCherry))]
-r16_GFP = [df_GFP['radial_curve_DNAFISH'][i][16] for i in range(len(df_GFP))]
-r16_mCherry = [df_mCherry['radial_curve_DNAFISH'][i][16] for i in range(len(df_mCherry))]
-df_r_GFP = pd.DataFrame({'r10': r10_GFP, 'r16': r16_GFP})
-df_r_mCherry = pd.DataFrame({'r10': r10_mCherry, 'r16': r16_mCherry})
-mean_r10_GFP = np.mean(r10_GFP)
-mean_r10_mCherry = np.mean(r10_mCherry)
-mean_r16_GFP = np.mean(r16_GFP)
-mean_r16_mCherry = np.mean(r16_mCherry)
-p_r10 = get_minuslnp(df_r_mCherry, df_r_GFP, 'r10', limit, 50)[1]
-p_r16 = get_minuslnp(df_r_mCherry, df_r_GFP, 'r16', limit, 50)[1]
+r1_GFP = [df_GFP['radial_curve_DNAFISH'][i][r1] for i in range(len(df_GFP))]
+r1_mCherry = [df_mCherry['radial_curve_DNAFISH'][i][r1] for i in range(len(df_mCherry))]
+r2_GFP = [df_GFP['radial_curve_DNAFISH'][i][r2] for i in range(len(df_GFP))]
+r2_mCherry = [df_mCherry['radial_curve_DNAFISH'][i][r2] for i in range(len(df_mCherry))]
+r3_GFP = [df_GFP['radial_curve_DNAFISH'][i][r3] for i in range(len(df_GFP))]
+r3_mCherry = [df_mCherry['radial_curve_DNAFISH'][i][r3] for i in range(len(df_mCherry))]
+e1_GFP = [df_GFP['radial_curve_edge_DNAFISH'][i][e1] for i in range(len(df_GFP))]
+e1_mCherry = [df_mCherry['radial_curve_edge_DNAFISH'][i][e1] for i in range(len(df_mCherry))]
+e2_GFP = [df_GFP['radial_curve_edge_DNAFISH'][i][e2] for i in range(len(df_GFP))]
+e2_mCherry = [df_mCherry['radial_curve_edge_DNAFISH'][i][e2] for i in range(len(df_mCherry))]
+e3_GFP = [df_GFP['radial_curve_edge_DNAFISH'][i][e3] for i in range(len(df_GFP))]
+e3_mCherry = [df_mCherry['radial_curve_edge_DNAFISH'][i][e3] for i in range(len(df_mCherry))]
+df_r_GFP = pd.DataFrame({'r1': r1_GFP, 'r2': r2_GFP, 'r3': r3_GFP, 'e1': e1_GFP, 'e2': e2_GFP, 'e3': e3_GFP})
+df_r_mCherry = pd.DataFrame({'r1': r1_mCherry, 'r2': r2_mCherry, 'r3': r3_mCherry, 'e1': e1_mCherry, 'e2': e2_mCherry, 'e3': e3_mCherry})
+mean_r1_GFP = np.mean(r1_GFP)
+mean_r1_mCherry = np.mean(r1_mCherry)
+mean_r2_GFP = np.mean(r2_GFP)
+mean_r2_mCherry = np.mean(r2_mCherry)
+mean_r3_GFP = np.mean(r3_GFP)
+mean_r3_mCherry = np.mean(r3_mCherry)
+mean_e1_GFP = np.mean(e1_GFP)
+mean_e1_mCherry = np.mean(e1_mCherry)
+mean_e2_GFP = np.mean(e2_GFP)
+mean_e2_mCherry = np.mean(e2_mCherry)
+mean_e3_GFP = np.mean(e3_GFP)
+mean_e3_mCherry = np.mean(e3_mCherry)
+p_r1 = get_minuslnp(df_r_mCherry, df_r_GFP, 'r1', limit, 50)[1]
+p_r2 = get_minuslnp(df_r_mCherry, df_r_GFP, 'r2', limit, 50)[1]
+p_r3 = get_minuslnp(df_r_mCherry, df_r_GFP, 'r3', limit, 50)[1]
+p_e1 = get_minuslnp(df_r_mCherry, df_r_GFP, 'e1', limit, 50)[1]
+p_e2 = get_minuslnp(df_r_mCherry, df_r_GFP, 'e2', limit, 50)[1]
+p_e3 = get_minuslnp(df_r_mCherry, df_r_GFP, 'e3', limit, 50)[1]
 mean_n_ecDNA_GFP = np.mean(df_GFP['n_ecDNA'])
 mean_n_ecDNA_mCherry = np.mean(df_mCherry['n_ecDNA'])
 p_n_ecDNA = get_minuslnp(df_GFP, df_mCherry, 'n_ecDNA', limit, 50)[1]
@@ -91,18 +117,6 @@ df_mCherry = df[df['group'] == 'mCherry'].copy().reset_index(drop=True)
 
 n_GFP_point2 = len(df_GFP)
 n_mCherry_point2 = len(df_mCherry)
-r10_GFP_point2 = [df_GFP['radial_curve_DNAFISH'][i][10] for i in range(len(df_GFP))]
-r10_mCherry_point2 = [df_mCherry['radial_curve_DNAFISH'][i][10] for i in range(len(df_mCherry))]
-r16_GFP_point2 = [df_GFP['radial_curve_DNAFISH'][i][16] for i in range(len(df_GFP))]
-r16_mCherry_point2 = [df_mCherry['radial_curve_DNAFISH'][i][16] for i in range(len(df_mCherry))]
-df_r_GFP_point2 = pd.DataFrame({'r10': r10_GFP_point2, 'r16': r16_GFP_point2})
-df_r_mCherry_point2 = pd.DataFrame({'r10': r10_mCherry_point2, 'r16': r16_mCherry_point2})
-mean_r10_GFP_point2 = np.mean(r10_GFP_point2)
-mean_r10_mCherry_point2 = np.mean(r10_mCherry_point2)
-mean_r16_GFP_point2 = np.mean(r16_GFP_point2)
-mean_r16_mCherry_point2 = np.mean(r16_mCherry_point2)
-p_r10_point2 = get_minuslnp(df_r_mCherry_point2, df_r_GFP_point2, 'r10', limit, 50)[1]
-p_r16_point2 = get_minuslnp(df_r_mCherry_point2, df_r_GFP_point2, 'r16', limit, 50)[1]
 
 mean_averageD_GFP_point2 = np.mean(df_GFP['dis_to_hub_area_normalized'])
 mean_averageD_mCherry_point2 = np.mean(df_mCherry['dis_to_hub_area_normalized'])
@@ -118,20 +132,20 @@ p_n_ecDNA_point2 = get_minuslnp(df_mCherry, df_GFP, 'n_ecDNA', limit, 50)[1]
 
 data.loc[0] = ['%s_mCherry' % sample, limit, n_mCherry,
                mean_area_mCherry, mean_total_area_ecDNA_mCherry, mean_total_area_ratio_ecDNA_mCherry, mean_mean_int_DNAFISH_mCherry,
-               mean_r10_mCherry, mean_r16_mCherry, mean_n_ecDNA_mCherry,
-               n_mCherry_point2, mean_r10_mCherry_point2, mean_r16_mCherry_point2,
+               mean_r1_mCherry, mean_r2_mCherry, mean_r3_mCherry, mean_e1_mCherry, mean_e2_mCherry, mean_e3_mCherry, mean_n_ecDNA_mCherry,
+               n_mCherry_point2,
                mean_averageD_mCherry_point2, std_averageD_mCherry_point2,
                mean_n_ecDNA_mCherry_point2, per_n_ecDNA10_mCherry_point2]
 data.loc[1] = ['%s_GFP' % sample, limit, n_GFP,
                mean_area_GFP, mean_total_area_ecDNA_GFP, mean_total_area_ratio_ecDNA_GFP, mean_mean_int_DNAFISH_GFP,
-               mean_r10_GFP, mean_r16_GFP, mean_n_ecDNA_GFP,
-               n_GFP_point2, mean_r10_GFP_point2, mean_r16_GFP_point2,
+               mean_r1_GFP, mean_r2_GFP, mean_r3_GFP, mean_e1_GFP, mean_e2_GFP, mean_e3_GFP, mean_n_ecDNA_GFP,
+               n_GFP_point2,
                mean_averageD_GFP_point2, std_averageD_GFP_point2,
                mean_n_ecDNA_GFP_point2, per_n_ecDNA10_GFP_point2]
-data.loc[2] = ['p', 50, min([limit, n_GFP, n_mCherry]),
+data.loc[2] = ['p', limit, min([limit, n_GFP, n_mCherry]),
                p_area, p_total_area_ecDNA, p_total_area_ratio_ecDNA, p_mean_int_DNAFISH,
-               p_r10, p_r16, p_n_ecDNA,
-               min([limit, n_mCherry_point2, n_GFP_point2]), p_r10_point2, p_r16_point2,
+               p_r1, p_r2, p_r3, p_e1, p_e2, p_e3, p_n_ecDNA,
+               min([limit, n_mCherry_point2, n_GFP_point2]),
                p_averageD_point2, p_averageD_point2,
                p_n_ecDNA_point2, p_n_ecDNA_point2]
 

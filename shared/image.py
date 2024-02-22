@@ -468,13 +468,14 @@ def polygon_to_mask(img_shape: list, polygon: list):
     return mask
 
 
-def napari_add_or_remove(shape_data, option: str, modify_mask: np.array):
+def napari_add_or_remove(shape_data, option: str, modify_mask: np.array, n_disk=3):
     """
     Manual correction by adding or removing objects based on napari shapes
 
     :param shape_data: polygon data from napari shape
-    :param option: only accept 'add' or 'remove'
+    :param option: only accept 'add' or 'remove' or 'add_disk'
     :param modify_mask: the mask that is to be modified
+    :param disk: size of disk if use 'add_disk'
     :return:
     """
     out = modify_mask.copy()
@@ -485,6 +486,9 @@ def napari_add_or_remove(shape_data, option: str, modify_mask: np.array):
             out[mask == 1] = 1
         elif option == 'remove':
             out[mask == 1] = 0
+        elif option == 'add_disk':
+            mask = binary_dilation(mask, disk(n_disk))
+            out[mask == 1] = 1
 
     return out
 
@@ -616,12 +620,12 @@ def img_search_local(img: np.array, img_search: np.array, topleft_center, interv
             minus = img_search.astype(float) - img_cut.astype(float)
             minus[minus < 0] = 0
             min_ratio_temp = minus.sum() / img_search.sum()
-            print('%s/%s: %s' % (i, int(xrange / interval) * int(yrange / interval), min_ratio_temp))
+            # print('%s/%s: %s' % (i, int(xrange / interval) * int(yrange / interval), min_ratio_temp))
             if min_ratio_temp < min_ratio:
                 min_ratio = min_ratio_temp
                 topleft_target = [topleft_ori[0] + x * interval, topleft_ori[1] + y * interval]
-    print(min_ratio)
-    print(topleft_target)
+    # print(min_ratio)
+    # print(topleft_target)
     return topleft_target, min_ratio
 
 

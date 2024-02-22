@@ -9,8 +9,8 @@ master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20230609_analys
 data_dir = "%sdata/" % master_folder
 output_dir = "%sdata/" % master_folder
 
-sample = 'E9'
-topleft_target = [-30.17315988295968, -102.07718983747714]  # positive change 2nd image, negative change 1st image
+sample = 'G11'
+topleft_target = [-46.52928673027077, -78.01726289375165] # positive change 2nd image, negative change 1st image
 
 img_before_GFP = skio.imread("%s/beforeFISH/%s/%s_GFP.tif" % (data_dir, sample, sample), plugin="tifffile")[:, :, 1]
 img_before_mCherry = skio.imread("%s/beforeFISH/%s/%s_mCherry.tif" % (data_dir, sample, sample), plugin="tifffile")[:, :, 0]

@@ -4,7 +4,7 @@ from skimage.segmentation import clear_border
 import shared.objects as obj
 from scipy import ndimage
 from skimage import segmentation
-from skimage.morphology import extrema, binary_dilation, binary_erosion, disk
+from skimage.morphology import extrema, binary_dilation, binary_erosion, disk, dilation, erosion
 from shared.objects import remove_large, remove_small
 from skimage.measure import label, regionprops_table, regionprops
 import pandas as pd
@@ -120,7 +120,7 @@ def cell_seg_trans(img_trans: np.array, max_size=1000, min_size=100, selem_num=8
 
 
 def cell_seg_fluorescent(img: np.array, otsu_factor=1.5, maxima_threshold=1, max_size=1800,
-                         min_size=300, circ_thresh=0.6):
+                         min_size=300, circ_thresh=0.6, threshold=0):
     """
     Perform cell segmentation from a fluorescent image
 
@@ -139,14 +139,21 @@ def cell_seg_fluorescent(img: np.array, otsu_factor=1.5, maxima_threshold=1, max
                     minimum allowable object size
     :param circ_thresh: float
                     minimum allowable circularity
+    :param threshold: artificial threshold for segmentation
     :return:
     """
-    thresh_val = threshold_otsu(img)
-    out = img > thresh_val * otsu_factor
+    if threshold == 0:
+        thresh_val = threshold_otsu(img)
+        out = img > thresh_val * otsu_factor
+    else:
+        out = img > threshold
     out = obj.label_watershed(out, maxima_threshold)
+    out = clear_border(out)
     out = obj.label_remove_large(out, max_size)
     out = obj.label_remove_small(out, min_size)
     out = obj.label_remove_low_circ(out, circ_thresh)
+    out = dilation(out, disk(3))
+    out = erosion(out, disk(3))
 
     return out
 
@@ -192,6 +199,49 @@ def nuclear_seg(img: np.array, local_factor=99, clearance_threshold=300, maxima_
     out = binary_dilation(out)
     # fill nuclei holes
     out = ndimage.binary_fill_holes(out)
+    # separate touching nuclei
+    out = obj.label_watershed(out, maxima_threshold)
+    # filter smaller objects
+    out = obj.label_remove_small(out, min_size)
+    out = obj.label_remove_large(out, max_size)
+    out = obj.label_resort(out)
+
+    return out
+
+
+def nuclear_seg_global(img: np.array, clearance_threshold=300, maxima_threshold=10, min_size=4000, max_size=25000):
+    """
+    Perform nuclear segmentation from a fluorescent image
+
+    tested by Paul Mischel Leica Scope
+
+    :param img: np.array
+                    fluorescent image
+    :param clearance_threshold: int
+                    threshold used to clear background
+                    default: 300
+    :param maxima_threshold: int
+                    threshold used in label_watershed
+                    for ColoDM under Paul Mischel Leica scope, 10
+    :param min_size: int
+                    minimum allowable object size
+    ;param max_size: int
+                    maximum allowable object size
+    :return: out: np.array
+                    labeled nuclear img
+    """
+    # global thresholding to determine rough location of nuclei
+    global_threshold_val = threshold_otsu(img)
+    # determine background region
+    out = img > global_threshold_val
+    # one round of erosion/dilation and clearance to clear background
+    out = binary_erosion(out)
+    out = obj.remove_small(out, clearance_threshold)
+    out = binary_dilation(out)
+    # fill nuclei holes
+    out = ndimage.binary_fill_holes(out)
+    # eliminate nuclei that touching boundary
+    out = clear_border(out)
     # separate touching nuclei
     out = obj.label_watershed(out, maxima_threshold)
     # filter smaller objects

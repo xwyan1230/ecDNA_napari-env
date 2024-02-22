@@ -24,9 +24,9 @@ total_batch = 2
 
 df = pd.DataFrame()
 for i in range(total_batch):
-    df_temp = pd.read_csv('%s/figures/%s/%s_n4_simplified_%s.txt' % (master_folder, sample, sample, i+1), na_values=['.'], sep='\t')
+    df_temp = pd.read_csv('%s/figures/%s/%s_n4_full_%s.txt' % (master_folder, sample, sample, i+1), na_values=['.'], sep='\t')
     df_temp['batch'] = [i+1] * len(df_temp)
     df = pd.concat([df, df_temp], axis=0)
 
-df.to_csv('%s%s/%s_n4_simplified.txt' % (output_dir, sample, sample), index=False, sep='\t')
+df.to_csv('%s%s/%s_n4_full.txt' % (output_dir, sample, sample), index=False, sep='\t')
 print("DONE!")

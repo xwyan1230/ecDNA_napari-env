@@ -17,7 +17,7 @@ output_dir = "%sfigures/" % master_folder
 n_dilation = 4
 
 # samples
-sample = 'C3'
+sample = 'G7'
 
 GFP_sample = 'GFP'
 mCherry_sample = 'mCherry'
@@ -25,57 +25,62 @@ hue_order = [GFP_sample, mCherry_sample]
 line_colors = [(0.30, 0.30, 0.30), (0.85, 0.35, 0.25)]  # black, red
 sns.set_palette(sns.color_palette(line_colors))
 
-df = pd.read_csv('%s/%s/%s_n4_updated1.txt' % (data_dir, sample, sample), na_values=['.'], sep='\t')
+df = pd.read_csv('%s/%s/%s_n4_simplified.txt' % (data_dir, sample, sample), na_values=['.'], sep='\t')
 df['total_int_DNAFISH'] = df['mean_int_DNAFISH'] * df['area_nuclear']
-feature = ['radial_curve_nuclear', 'radial_curve_DNAFISH', 'n_ecDNA', 'total_area_ratio_ecDNA', 'total_area_ecDNA']
+feature = ['radial_curve_nuclear', 'radial_curve_DNAFISH', 'radial_curve_edge_nuclear', 'radial_curve_edge_DNAFISH', 'percentage_area_curve_ecDNA', 'n_ecDNA_lst',
+           'total_area_DNAFISH_lst', 'total_area_ratio_DNAFISH_lst']
 for f in feature:
     df[f] = [dat.str_to_float(df[f][i]) for i in range(len(df))]
 
+df['r'] = np.sqrt(df['area_nuclear']/math.pi)
+df['total_area_ecDNA_sqrt'] = np.sqrt(df['total_area_ecDNA']/math.pi)
+df['total_area_ecDNA_sqrt_normalized'] = df['total_area_ecDNA_sqrt']/df['r']
+df['dis_to_hub_area_normalized'] = df['dis_to_hub_area']/df['r']
 df_sample = df[df['group'].isin(hue_order)].copy().reset_index(drop=True)
 df = df_sample
 df_GFP = df[df['group'] == 'GFP'].copy().reset_index(drop=True)
 df_mCherry = df[df['group'] == 'mCherry'].copy().reset_index(drop=True)
 
-# n_ecDNA curve
-"""x = np.arange(0, 65*1000, 1000)
-x_label = 'intensity'
-feature = 'n_ecDNA'
-plt.subplots(figsize=(12, 9))
-for k in range(len(hue_order)):
-    data = df[df['group'] == hue_order[k]].copy().reset_index(drop=True)
-    number_nuclear = len(data)
-    mean_curve3, ci_lower3, ci_higher3 = dat.mean_list(data[feature].tolist())
-    for i in range(len(data)):
-        plt.plot(x, data[feature][i], alpha=0.001, color=line_colors[k])
-    plt.plot(x, mean_curve3, color=line_colors[k], label='%s, n=%s' % (hue_order[k], number_nuclear))
-    plt.plot(x, ci_lower3, color=line_colors[k], linestyle='--', linewidth=0.5)
-    plt.plot(x, ci_higher3, color=line_colors[k], linestyle='--', linewidth=0.5)
-plt.xlabel(x_label)
-plt.ylim([0, 20])
-plt.ylabel(feature)
-plt.legend()
-# plt.savefig('%s%s/%s_%s_updated.pdf' % (output_dir, sample, sample, feature))
-plt.show()"""
+# radial heatmap
+print("Plotting total radial curve...")
+temp = np.arange(98.75, 0, -2.5)
+column_lst = [str(i) for i in temp]
+data_heatmap = pd.DataFrame(columns=column_lst)
+for s in hue_order:
+    data_sample = df[df['group'] == s].copy().reset_index(drop=True)
+    data_radial = pd.DataFrame()
+    for j in range(len(column_lst)):
+        data_radial[column_lst[j]] = [data_sample['radial_curve_edge_DNAFISH'][i][-(j+1)] for i in range(len(data_sample))]
+    data_heatmap.loc[len(data_heatmap.index)] = data_radial.mean()
+data_heatmap.index = hue_order
 
-x = np.arange(2500, 15*5000+2500, 5000)
-x_label = 'intensity'
-feature = 'total_area_ratio_ecDNA'
+plt.subplots(figsize=(12, len(hue_order)))
+ax1 = sns.heatmap(data_heatmap, cbar=0, linewidths=2, vmax=data_heatmap.values.max(), vmin=data_heatmap.values.min(), square=True, cmap='coolwarm')
+plt.savefig('%s/%s/%s_heatmap_edge_DNAFISH.pdf' % (output_dir, sample, sample))
+plt.show()
+
+plt.subplots(figsize=(12, len(hue_order)))
+ax1 = sns.heatmap(data_heatmap, cbar=0, linewidths=2, vmax=1.3, vmin=0.6, square=True, cmap='coolwarm')
+plt.savefig('%s/%s/%s_heatmap_edge_DNAFISH_fixscale.pdf' % (output_dir, sample, sample))
+plt.show()
+
+# radial curve
+x = np.arange(98.75, 0, -2.5)
+x_label = 'r to edge (reverse)'
 plt.subplots(figsize=(12, 9))
 for k in range(len(hue_order)):
     data = df[df['group'] == hue_order[k]].copy().reset_index(drop=True)
     number_nuclear = len(data)
-    mean_curve3, ci_lower3, ci_higher3 = dat.mean_list(data[feature].tolist())
-    print(mean_curve3)
-    print(sum(mean_curve3))
+    mean_curve3, ci_lower3, ci_higher3 = dat.mean_list(data['radial_curve_edge_DNAFISH'].tolist())
     for i in range(len(data)):
-        plt.plot(x, data[feature][i], alpha=0.01, color=line_colors[k])
+        plt.plot(x, data['radial_curve_edge_DNAFISH'][i], alpha=0.01, color=line_colors[k])
     plt.plot(x, mean_curve3, color=line_colors[k], label='%s, n=%s' % (hue_order[k], number_nuclear))
     plt.plot(x, ci_lower3, color=line_colors[k], linestyle='--', linewidth=0.5)
     plt.plot(x, ci_higher3, color=line_colors[k], linestyle='--', linewidth=0.5)
+plt.axhline(y=1, color='black', linestyle='--')
 plt.xlabel(x_label)
-plt.ylim([0, 1])
-plt.ylabel(feature)
+plt.ylim([0.4, 1.6])
+plt.ylabel('radial_curve_edge')
 plt.legend()
-# plt.savefig('%s%s/%s_%s_updated.pdf' % (output_dir, sample, sample, feature))
+plt.savefig('%s%s/%s_radial_curve_edge_DNAFISH.pdf' % (output_dir, sample, sample))
 plt.show()
-# plt.close()

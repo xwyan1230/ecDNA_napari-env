@@ -12,8 +12,8 @@ master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20230609_analys
 data_dir = "%sdata/" % master_folder
 output_dir = "%salignment/" % master_folder
 
-sample = 'E9'
-topleft_target = [1964.8268401170403, 1912.9228101625229]
+sample = 'G11'
+topleft_target = [1943.4707132697292, 1896.9827371062484]
 interval = 5
 
 # img

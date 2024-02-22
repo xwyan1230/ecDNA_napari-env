@@ -17,13 +17,14 @@ output_dir = "%sfigures/" % master_folder
 n_dilation = 4
 
 # samples
-rows = ['C', 'D']
+rows = ['C', 'D', 'E', 'F', 'G']
 columns = ['2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
-additional_sample = ['E2', 'E3', 'E4', 'E5', 'E6', 'E7', 'E8', 'E9']
+additional_sample = []
 total = len(rows) * len(columns) + len(additional_sample)
 
 col = ['sample', 'n', 'mean_area_nuclear', 'mean_total_area_ecDNA', 'mean_total_area_ratio_ecDNA',
-       'mean_mean_int_DNAFISH', 'mean_r10', 'mean_r16', 'mean_n_ecDNA', 'n_point2', 'mean_r10_point2', 'mean_r16_point2',
+       'mean_mean_int_DNAFISH', 'mean_r1', 'mean_r2', 'mean_r3', 'mean_e1', 'mean_e2', 'mean_e3', 'mean_n_ecDNA',
+       'n_point2',
        'mean_averageD_point2', 'std_averageD_point2', 'mean_n_ecDNA_point2', 'per_n_ecDNA10_point2', 'gene']
 data_mean = pd.DataFrame(columns=col)
 data_p = pd.DataFrame(columns=col)
@@ -48,11 +49,14 @@ for k in range(total):
                                            get_phenotype(df, 'mean_total_area_ecDNA'),
                                            get_phenotype(df, 'mean_total_area_ratio_ecDNA'),
                                            get_phenotype(df, 'mean_mean_int_DNAFISH'),
-                                           get_phenotype(df, 'mean_r10'),
-                                           get_phenotype(df, 'mean_r16'),
+                                           get_phenotype(df, 'mean_r1'),
+                                           get_phenotype(df, 'mean_r2'),
+                                           get_phenotype(df, 'mean_r3'),
+                                           get_phenotype(df, 'mean_e1'),
+                                           get_phenotype(df, 'mean_e2'),
+                                           get_phenotype(df, 'mean_e3'),
                                            get_phenotype(df, 'mean_n_ecDNA'),
-                                           df['n_point2'][2], get_phenotype(df, 'mean_r10_point2'),
-                                           get_phenotype(df, 'mean_r16_point2'),
+                                           df['n_point2'][2],
                                            get_phenotype(df, 'mean_averageD_point2'),
                                            get_phenotype(df, 'std_averageD_point2'),
                                            get_phenotype(df, 'mean_n_ecDNA_point2'),
@@ -62,11 +66,13 @@ for k in range(total):
                                            df['mean_total_area_ecDNA'][2],
                                            df['mean_total_area_ratio_ecDNA'][2],
                                            df['mean_mean_int_DNAFISH'][2],
-                                           df['mean_r10'][2],
-                                           df['mean_r16'][2],
+                                           df['mean_r1'][2],
+                                           df['mean_r2'][2],
+                                           df['mean_r3'][2],
+                                           df['mean_e1'][2],
+                                     df['mean_e2'][2], df['mean_e3'][2],
                                            df['mean_n_ecDNA'][2],
-                                           df['n_point2'][2], df['mean_r10_point2'][2],
-                                           df['mean_r16_point2'][2],
+                                           df['n_point2'][2],
                                            df['mean_averageD_point2'][2],
                                            df['std_averageD_point2'][2],
                                            df['mean_n_ecDNA_point2'][2],

@@ -19,7 +19,7 @@ master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20230609_analys
 data_dir = "%sdata/" % master_folder
 output_dir = "%sfigures/" % master_folder
 
-sample = 'E9'
+sample = 'G11'
 
 df = pd.read_csv('%s/figures/%s/%s_n4_simplified.txt' % (master_folder, sample, sample), na_values=['.'], sep='\t')
 df['ln_mean_int_green'] = np.log(df['mean_int_green'])

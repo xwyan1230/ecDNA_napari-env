@@ -16,8 +16,8 @@ master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20230609_analys
 data_dir = "%sdata/" % master_folder
 output_dir = "%salignment/" % master_folder
 
-row = 'E2'
-sample = 'E9'
+row = 'G'
+sample = 'G9'
 total_fov = 16
 dshape_factor = 0.0765
 n_col = 4

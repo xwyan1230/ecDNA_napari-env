@@ -22,13 +22,13 @@ data_dir1 = "%sfigures/" % master_folder
 output_dir = "%sfigures/" % master_folder
 
 exp = '20230512_mixing_Wee1-BRD4_6hr'
-sample = '9_Ctrl-GFP-6hr_BRD4-mCh-6hr'
+sample = '10_BRD4-GFP-6hr_Ctrl-mCh-6hr'
 """file_name = 'alignment_label'
 file1 = 'alignment_label_1'
 file2 = 'alignment_label_2'"""
-file_name = '%s_n4' % sample
-file1 = '%s_1_n4' % sample
-file2 = '%s_2_n4' % sample
+file_name = '%s_n4_new' % sample
+file1 = '%s_1_n4_new' % sample
+file2 = '%s_2_n4_new' % sample
 df1 = pd.read_csv('%s%s/%s.txt' % (data_dir1, sample, file1), na_values=['.'], sep='\t')
 df2 = pd.read_csv('%s%s/%s.txt' % (data_dir1, sample, file2), na_values=['.'], sep='\t')
 df = pd.concat([df1, df2], axis=0)

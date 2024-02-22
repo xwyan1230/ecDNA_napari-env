@@ -15,17 +15,22 @@ output_dir = "%sfigures/" % master_folder
 n_dilation = 4
 
 # samples
-sample = 'E9'
+sample = 'C11'
 
 df = pd.read_csv('%s/%s/%s_n4_simplified.txt' % (data_dir, sample, sample), na_values=['.'], sep='\t')
 df['ln_mean_int_green'] = np.log(df['mean_int_green'])
 df['ln_mean_int_red'] = np.log(df['mean_int_red'])
 
+df_align = pd.read_csv('%s/alignment/alignment.txt' % master_folder, na_values=['.'], sep='\t')
+feature = ['GFP', 'mCherry']
+for f in feature:
+    df_align[f] = [dat.str_to_float(df_align[f][i]) for i in range(len(df_align))]
+
 sample_lst = []
 for i in range(len(df)):
-    if (df['ln_mean_int_red'][i] < 8.0) & (df['ln_mean_int_green'][i] > 8.25):
+    if (df['ln_mean_int_red'][i] < df_align[df_align['sample'] == sample]['GFP'].tolist()[0][0]) & (df['ln_mean_int_green'][i] > df_align[df_align['sample'] == sample]['GFP'].tolist()[0][1]):
         sample_lst.append('GFP')
-    elif (df['ln_mean_int_red'][i] > 8.0) & (df['ln_mean_int_green'][i] < 8.3):
+    elif (df['ln_mean_int_red'][i] > df_align[df_align['sample'] == sample]['mCherry'].tolist()[0][0]) & (df['ln_mean_int_green'][i] < df_align[df_align['sample'] == sample]['mCherry'].tolist()[0][1]):
         sample_lst.append('mCherry')
     else:
         sample_lst.append('NA')

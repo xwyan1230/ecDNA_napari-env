@@ -10,7 +10,7 @@ master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20230609_analys
 data_dir = "%sdata/" % master_folder
 output_dir = "%sfigures/" % master_folder
 
-sample = 'E9'
+sample = 'G11'
 interval = 50
 
 # img

@@ -12,7 +12,7 @@ master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20221215_analys
 data_dir = "%sdata/" % master_folder
 output_dir = "%sfigures/" % master_folder
 
-sample = 'H3K27Ac'
+sample = 'H3K4me3'
 file_name = 'DM_%s_acid_RAW' % sample
 img_hoechst = skio.imread("%s%s_ch00.tif" % (data_dir, file_name), plugin="tifffile")
 img_DNAFISH = skio.imread("%s%s_ch02.tif" % (data_dir, file_name), plugin="tifffile")

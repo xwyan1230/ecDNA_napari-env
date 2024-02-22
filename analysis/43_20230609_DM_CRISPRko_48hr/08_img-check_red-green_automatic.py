@@ -16,8 +16,8 @@ master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20230609_analys
 data_dir = "%sdata/" % master_folder
 output_dir = "%salignment/" % master_folder
 
-row = 'E2'
-sample = 'E9'
+row = 'F'
+sample = 'F3'
 total_fov = 16
 dshape_factor = 0.0765
 
@@ -56,16 +56,18 @@ for fov in range(total_fov):
     img_hoechst_local = ima.image_paste_to(img_hoechst_local, img_hoechst_resize,
                                            [int(topleft_target[1]), int(topleft_target[0])])
 
-    data.to_csv('%s/%s/%s_alignment_autocheck.txt' % (output_dir, sample, sample), index=False, sep='\t')
+    # data.to_csv('%s/%s/%s_alignment_autocheck.txt' % (output_dir, sample, sample), index=False, sep='\t')
     """viewer = napari.Viewer()
     viewer.add_image(img_before, blending='additive', colormap='blue', contrast_limits=[0, 65535])
     viewer.add_image(img_hoechst_local, blending='additive', colormap='green', contrast_limits=[0, 65535])
     napari.run()"""
 
 viewer = napari.Viewer()
-viewer.add_image(img_before, blending='additive', colormap='blue', contrast_limits=[0, 65535])
-viewer.add_image(img_hoechst_local, blending='additive', colormap='green', contrast_limits=[0, 65535])
-plt.imsave("%s/%s/%s_alignment_local_before.tiff" % (output_dir, sample, sample), dis.blending(viewer))
+# viewer.add_image(img_before, blending='additive', colormap='blue', contrast_limits=[0, 65535])
+viewer.add_image(img_before_GFP, blending='additive', colormap='green', contrast_limits=[0, img_before_GFP.max()])
+viewer.add_image(img_before_mCherry, blending='additive', colormap='red', contrast_limits=[0, img_before_mCherry.max()])
+viewer.add_image(img_hoechst_local, blending='additive', colormap='blue', contrast_limits=[0, 65535])
+plt.imsave("%s/%s/%s_alignment_local_before_redgreen.tiff" % (output_dir, sample, sample), dis.blending(viewer))
 viewer.close()
 
 print("DONE!")

@@ -13,15 +13,17 @@ from skimage.measure import label, regionprops
 # file info
 master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20230609_analysis_DM_KOscreen_48hr/"
 data_dir = "%sfigures/" % master_folder
-output_dir = "%sfigures/" % master_folder
+output_dir = "%sforgraph/" % master_folder
 
 # samples
 ctrl = pd.read_csv('%sCtrl.txt' % data_dir, na_values=['.'], sep='\t')
-features = ['mean_area_nuclear',  'mean_r10', 'mean_r16', 'mean_n_ecDNA']
-features1 = ['mean_r10_point2', 'mean_r16_point2', 'mean_averageD_point2', 'std_averageD_point2', 'mean_n_ecDNA_point2', 'per_n_ecDNA10_point2']
+features = ['mean_area_nuclear', 'mean_n_ecDNA', 'peak_relativer', 'fwhm_relativer', 'center_relativer', 'peak_absoluter',
+            'fwhm_absoluter', 'center_absoluter']
+features1 = ['mean_averageD_point2', 'std_averageD_point2']
 features2 = ['mean_total_area_ecDNA', 'mean_total_area_ratio_ecDNA', 'mean_mean_int_DNAFISH']
 
-ex_list = ['D9']
+# ex_list = []
+ex_list = ['D3', 'G10']
 # load data
 df_mean = pd.read_csv('%ssummary_mean.txt' % data_dir, na_values=['.'], sep='\t')
 df_p = pd.read_csv('%ssummary_p.txt' % data_dir, na_values=['.'], sep='\t')
@@ -91,7 +93,7 @@ for feature in features1:
     plt.savefig('%s/volcano/%s_volcano_gene.pdf' % (output_dir, feature))
     plt.close()
 
-feature = 'per_n_ecDNA10_point2'
+"""feature = 'per_n_ecDNA10_point2'
 plt.subplots(figsize=(9, 6))
 plt.scatter(df_mean[feature], df_p[feature], color=(0.30, 0.30, 0.30), s=20)
 for i in range(len(df_mean)):
@@ -112,32 +114,7 @@ plt.xlim([-3, 3])
 plt.xlabel(feature)
 plt.ylabel('-lnp')
 plt.savefig('%s/volcano/%s_volcano_gene_rescale.pdf' % (output_dir, feature))
-plt.close()
-
-feature = 'mean_r10'
-plt.subplots(figsize=(9, 6))
-plt.scatter(df_mean[feature], df_p[feature], color=(0.30, 0.30, 0.30), s=20)
-for i in range(len(df_mean)):
-    plt.text(x=df_mean[feature][i]+0.001, y=df_p[feature][i]+0.01, s=df_mean['sample'][i], size=5)
-plt.scatter(df_mean_ctrl[feature], df_p_ctrl[feature], color=(0.85, 0.35, 0.25), s=20)
-plt.xlim([-0.1, 0.1])
-plt.ylim([0, 4])
-plt.xlabel(feature)
-plt.ylabel('-lnp')
-plt.savefig('%s/volcano/%s_volcano_pw_rescale.pdf' % (output_dir, feature))
-plt.close()
-
-plt.subplots(figsize=(9, 6))
-plt.scatter(df_mean[feature], df_p[feature], color=(0.30, 0.30, 0.30), s=20)
-for i in range(len(df_mean)):
-    plt.text(x=df_mean[feature][i]+0.001, y=df_p[feature][i]+0.01, s=df_mean['gene'][i], size=5)
-plt.scatter(df_mean_ctrl[feature], df_p_ctrl[feature], color=(0.85, 0.35, 0.25), s=20)
-plt.xlim([-0.1, 0.1])
-plt.ylim([0, 4])
-plt.xlabel(feature)
-plt.ylabel('-lnp')
-plt.savefig('%s/volcano/%s_volcano_gene_rescale.pdf' % (output_dir, feature))
-plt.close()
+plt.close()"""
 
 for feature in features2:
     plt.subplots(figsize=(9, 6))
