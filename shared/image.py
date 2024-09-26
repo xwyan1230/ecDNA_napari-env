@@ -614,18 +614,18 @@ def img_search_local(img: np.array, img_search: np.array, topleft_center, interv
             i = i + 1
             topleft = [topleft_ori[0] + x * interval, topleft_ori[1] + y * interval]
             img_cut = img.copy()
-            img_cut = img_cut[int(topleft[1]):int(topleft[1] + img_search.shape[0]),
-                      int(topleft[0]):int(topleft[0] + img_search.shape[1])]
+            img_cut = img_cut[int(topleft[1]):(int(topleft[1]) + img_search.shape[0]),
+                      int(topleft[0]):(int(topleft[0]) + img_search.shape[1])]
 
             minus = img_search.astype(float) - img_cut.astype(float)
             minus[minus < 0] = 0
             min_ratio_temp = minus.sum() / img_search.sum()
-            # print('%s/%s: %s' % (i, int(xrange / interval) * int(yrange / interval), min_ratio_temp))
+            print('%s/%s: %s' % (i, int(xrange / interval) * int(yrange / interval), min_ratio_temp))
             if min_ratio_temp < min_ratio:
                 min_ratio = min_ratio_temp
                 topleft_target = [topleft_ori[0] + x * interval, topleft_ori[1] + y * interval]
-    # print(min_ratio)
-    # print(topleft_target)
+    print(min_ratio)
+    print(topleft_target)
     return topleft_target, min_ratio
 
 

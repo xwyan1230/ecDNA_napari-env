@@ -1,7 +1,7 @@
 import skimage.io as skio
 import pandas as pd
 import matplotlib.pyplot as plt
-from shared.sinaplot import sinaplot
+# from shared.sinaplot import sinaplot
 from skimage.morphology import disk, dilation, medial_axis
 from skimage.measure import label, regionprops
 import shared.image as ima
@@ -22,12 +22,19 @@ output_dir = "%sfigures/" % master_folder
 line_colors = [[85/255, 103/255, 160/255], [85/255, 103/255, 160/255]]
 sns.set_palette(sns.color_palette(line_colors))
 
-treatment = 'iWee1_250nM_24hr'
+treatment = 'temp'
 
 # samples = ['DMSO_24hr_1', 'dWee1_1uM_24hr_1', 'dWee1_1uM_24hr_2']
 # samples = ['DMSO_24hr_1', 'iWee1_500nM_24hr_1', 'iWee1_500nM_24hr_4']
 # samples = ['DMSO_24hr_1', 'dWee1_250nM_24hr_1', 'dWee1_250nM_24hr_2']
-samples = ['DMSO_24hr_1', 'iWee1_250nM_24hr_1', 'iWee1_250nM_24hr_2']
+# samples = ['DMSO_24hr_1', 'iWee1_250nM_24hr_1', 'iWee1_250nM_24hr_2']
+# samples = ['DMSO_24hr_1', 'dWee1_125nM_24hr_1']
+# samples = ['DMSO_24hr_1', 'dWee1_2uM_24hr_1', 'dWee1_2uM_24hr_2']
+# samples = ['DMSO_24hr_1', 'iWee1_1uM_24hr_1', 'iWee1_1uM_24hr_2']
+# samples = ['DMSO_24hr_1', 'dWee1_500nM_24hr_1', 'dWee1_500nM_24hr_2']
+# samples = ['DMSO_24hr_1', 'iWee1_125nM_24hr_1', 'iWee1_125nM_24hr_2']
+# samples = ['DMSO_24hr_1', 'iWee1_62point5nM_24hr_1']
+samples = ['dWee1_1uM_24hr_1', 'dWee1_1uM_24hr_2', 'dWee1_2uM_24hr_1', 'dWee1_2uM_24hr_2']
 
 df = pd.DataFrame()
 for sample in samples:
@@ -45,25 +52,26 @@ print(len(df_sort[df_sort['sample'] == 'DMSO_24hr']))
 print(len(df_sort[df_sort['sample'] == '%s' % treatment]))
 _, p_val = stats.ttest_ind(df_sort[df_sort['sample'] == '%s' % treatment]['n_ecDNA'], df_sort[df_sort['sample'] == 'DMSO_24hr']['n_ecDNA'], equal_var=True)
 print(p_val)
-# print(stats.mannwhitneyu(df_sort[df_sort['sample'] == 'dWee1_1uM_24hr']['n_ecDNA'], df_sort[df_sort['sample'] == 'DMSO_24hr']['n_ecDNA'], use_continuity=False))
+_, p_val = stats.mannwhitneyu(df_sort[df_sort['sample'] == '%s' % treatment]['n_ecDNA'], df_sort[df_sort['sample'] == 'DMSO_24hr']['n_ecDNA'], use_continuity=False)
+print(p_val)
 
 plt.subplots(figsize=(9, 6))
 sns.histplot(data=df.reset_index(drop=True), x='area_nuclear', hue='sample')
 plt.xlim([0, 10000])
-plt.savefig('%s/n_ecDNA/%s-vs-DMSO_area_nuclear.pdf' % (output_dir, treatment))
+# plt.savefig('%s/n_ecDNA/%s-vs-DMSO_area_nuclear.pdf' % (output_dir, treatment))
 plt.show()
 
 
-plt.subplots(figsize=(4, 9))
+"""plt.subplots(figsize=(4, 9))
 sinaplot(data=df_sort, x='sample', y='n_ecDNA', alpha=0.7, violin=False, scale='area')
 if not os.path.exists("%s/n_ecDNA/" % output_dir):
     os.makedirs("%s/n_ecDNA/" % output_dir)
 plt.savefig('%s/n_ecDNA/%s-vs-DMSO_sinaplot.pdf' % (output_dir, treatment))
-plt.show()
+plt.show()"""
 
 plt.subplots(figsize=(4, 9))
 sns.violinplot(data=df_sort, x='sample', y='n_ecDNA', cut=0)
-plt.savefig('%s/n_ecDNA/%s-vs-DMSO_violinplot.pdf' % (output_dir, treatment))
+# plt.savefig('%s/n_ecDNA/%s-vs-DMSO_violinplot.pdf' % (output_dir, treatment))
 plt.show()
 
 

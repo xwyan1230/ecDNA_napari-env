@@ -20,8 +20,17 @@ master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20240205_analys
 data_dir = "%sdata/" % master_folder
 output_dir = "%sprocessed/" % master_folder
 
-sample = 'DMSO_24hr'
-file_name = '20240205_sp8_Wee1inhibitoranddegrader_acidFISH_DM_DMSO_pos9_1'
+sample = 'iWee1_62point5nM_24hr'
+file_name = '20240315_sp8_dWee1andiWee1_series_iWee1_62point5nM_24hr_9pos_1'
+# file_name = '20240307_sp8_iWee1anddWee1_acidFISH_24hr_iWee1_125nM_24hr_9pos_2'
+# file_name = '20240315_sp8_dWee1andiWee1_series_dWee1_500nM_24hr_9pos_2'
+# file_name = '20240307_sp8_iWee1anddWee1_acidFISH_24hr_iWee1_1uM_24hr_9pos_2'
+# file_name = '20240315_sp8_dWee1andiWee1_series_dWee1_2uM_24hr_9pos_2'
+# file_name = '20240307_sp8_iWee1anddWee1_acidFISH_24hr_dWee1_125nM_24hr_4pos_2'
+# file_name = '20240202_Colo320DM_dWee1andiWee1_acidFISH_Colo320DM_iWee1_250nM_pos9_2'
+# file_name = '20240202_Colo320DM_dWee1andiWee1_acidFISH_Colo320DM_dWee1_250nM_pos9_2'
+# file_name = '20240205_sp8_Wee1inhibitoranddegrader_acidFISH_iWee1_500nM_pos9_4'
+# file_name = '20240205_sp8_Wee1inhibitoranddegrader_acidFISH_DM_DMSO_pos9_1'
 # file_name = '20240205_sp8_Wee1inhibitoranddegrader_acidFISH_dWee1_1uM_pos9_1'
 total_fov = 9
 
@@ -38,6 +47,7 @@ min_size_nuclear = (nuclear_size_range[0] * cell_avg_size * 1000 / (pixel_size *
 max_size_nuclear = (nuclear_size_range[1] * cell_avg_size * 1000 / (pixel_size * 2)) ** 2 * math.pi
 
 for i in range(total_fov):
+    print(i)
     img_nuclear = skio.imread("%s%s/%s_s%s_ch00.tif" % (data_dir, sample, file_name, i), plugin="tifffile")
     img_DNAFISH = skio.imread("%s%s/%s_s%s_ch01.tif" % (data_dir, sample, file_name, i), plugin="tifffile")
 
@@ -60,14 +70,14 @@ for i in range(total_fov):
         img_DNAFISH_seg1[img_DNAFISH > 10000] = 1
         img_DNAFISH_seg1 = obj.remove_small(img_DNAFISH_seg1, 20)"""
     img_DNAFISH_seg1 = np.zeros_like(img_DNAFISH)
-    img_DNAFISH_seg1[img_DNAFISH > 6000] = 1
+    img_DNAFISH_seg1[img_DNAFISH > 4300] = 1
     img_DNAFISH_seg1 = obj.remove_small(img_DNAFISH_seg1, 15)
 
     if not os.path.exists("%s/color_img/%s/" % (output_dir, sample)):
         os.makedirs("%s/color_img/%s/" % (output_dir, sample))
 
     viewer = napari.Viewer()
-    viewer.add_image(img_DNAFISH, blending='additive', colormap='green', contrast_limits=[0, 25000])
+    viewer.add_image(img_DNAFISH, blending='additive', colormap='green', contrast_limits=[0, 35000])
     plt.imsave('%s/color_img/%s/%s_%s_DNAFISH.tiff' % (output_dir, sample, file_name, i), dis.blending(viewer))
     viewer.close()
 
@@ -76,7 +86,7 @@ for i in range(total_fov):
     viewer = napari.Viewer()
     viewer.add_image(img_nuclear_copy, blending='additive', colormap='blue', contrast_limits=[0, 45000])
     plt.imsave('%s/color_img/%s/%s_%s_nuclei.tiff' % (output_dir, sample, file_name, i), dis.blending(viewer))
-    viewer.add_image(img_DNAFISH, blending='additive', colormap='green', contrast_limits=[0, 25000])
+    viewer.add_image(img_DNAFISH, blending='additive', colormap='green', contrast_limits=[0, 35000])
     plt.imsave('%s/color_img/%s/%s_%s_img.tiff' % (output_dir, sample, file_name, i), dis.blending(viewer))
     viewer.add_image(img_nuclear_seg_convex, blending='additive', colormap='red', contrast_limits=[0, img_nuclear_seg_convex.max()])
     viewer.add_image(img_DNAFISH_seg1, blending='additive', colormap='green', contrast_limits=[0, 1])

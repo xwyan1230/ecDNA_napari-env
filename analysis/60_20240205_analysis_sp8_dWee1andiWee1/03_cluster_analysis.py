@@ -16,20 +16,34 @@ data_dir = "%sdata/" % master_folder
 data_dir1 = "%sprocessed/" % master_folder
 output_dir = "%sprocessed/" % master_folder
 
-sample = 'iWee1_250nM_24hr'
-file_name = '20240202_Colo320DM_dWee1andiWee1_acidFISH_Colo320DM_iWee1_250nM_pos9_2'
-sets = 2
-# file_name = '20240202_Colo320DM_dWee1andiWee1_acidFISH_Colo320DM_dWee1_250nM_pos9_2'
-# file_name = '20240205_sp8_Wee1inhibitoranddegrader_acidFISH_iWee1_500nM_pos9_4'
+sample = 'iWee1_62point5nM_24hr'
+sets = 1
+file_name = '20240315_sp8_dWee1andiWee1_series_iWee1_62point5nM_24hr_9pos_%s' % sets
+# file_name = '20240307_sp8_iWee1anddWee1_acidFISH_24hr_iWee1_125nM_24hr_9pos_%s' % sets
+# file_name = '20240315_sp8_dWee1andiWee1_series_dWee1_500nM_24hr_9pos_%s' % sets
+# file_name = '20240307_sp8_iWee1anddWee1_acidFISH_24hr_iWee1_1uM_24hr_9pos_%s' % sets
+# file_name = '20240315_sp8_dWee1andiWee1_series_dWee1_2uM_24hr_9pos_%s' % sets
+# file_name = '20240307_sp8_iWee1anddWee1_acidFISH_24hr_dWee1_125nM_24hr_4pos_%s' % sets  # set 2 fov 1
+# file_name = '20240202_Colo320DM_dWee1andiWee1_acidFISH_Colo320DM_iWee1_250nM_pos9_%s' % sets
+# file_name = '20240202_Colo320DM_dWee1andiWee1_acidFISH_Colo320DM_dWee1_250nM_pos9_%s' % sets
+# file_name = '20240205_sp8_Wee1inhibitoranddegrader_acidFISH_iWee1_500nM_pos9_%s' % sets
 # file_name = '20240205_sp8_Wee1inhibitoranddegrader_acidFISH_DM_DMSO_pos9_%s' % sets
 # file_name = '20240205_sp8_Wee1inhibitoranddegrader_acidFISH_dWee1_1uM_pos9_%s' % sets
-total_fov = 5
+total_fov = 9
 n_nuclear_convex_dilation = 0
 local_size = 200
 
+
+def img_to_pixel_int(mask: np.array, img: np.array):
+    index = [i for i, e in enumerate(mask.flatten()) if e != 0]
+    out = list(map(img.flatten().__getitem__, index))
+    return out
+
+
 data = pd.DataFrame(columns=['sample', 'file_name', 'FOV', 'nuclear', 'n_nuclear_convex_dilation',
-                             'centroid_nuclear', 'area_nuclear', 'circ_nuclear', 'n_ecDNA',
-                             'total_area_ecDNA', 'total_area_ratio_ecDNA', 'dis_to_hub_area'])
+                             'centroid_nuclear', 'area_nuclear', 'circ_nuclear', 'mean_int_DNAFISH', 'n_ecDNA',
+                             'total_area_ecDNA', 'total_area_ratio_ecDNA', 'dis_to_hub_area',
+                             'DNAFISH_seg_label', 'int_r_to_edge', 'int_relative_r'])
 
 for fov in range(total_fov):
     print("Analyzing fov %s" % (fov+1))
@@ -81,6 +95,19 @@ for fov in range(total_fov):
 
         mean_int_ind_ecDNA = [ecDNA_props[i].intensity_mean for i in range(len(ecDNA_props))]
         total_int_ind_ecDNA = list(np.array(area_ind_ecDNA) * np.array(mean_int_ind_ecDNA))
+        mean_int_DNAFISH = local_DNAFISH_props[0].intensity_mean
+
+        # radial measurements
+        local_nuclear_centroid = local_nuclear_props[0].centroid
+        _, local_edge_distance_map = medial_axis(local_nuclear_seg, return_distance=True)
+        local_centroid_distance_map = ima.distance_map_from_point(local_nuclear_seg, local_nuclear_centroid)
+        local_centroid_distance_map[local_nuclear_seg == 0] = 0
+        local_edge_distance_map[local_nuclear_seg == 0] = -1
+        local_relative_r_map = local_centroid_distance_map / (
+                local_centroid_distance_map + local_edge_distance_map)
+        DNAFISH_seg_label = img_to_pixel_int(local_nuclear_seg, local_DNAFISH_seg)
+        int_r_to_edge = img_to_pixel_int(local_nuclear_seg, local_edge_distance_map)
+        int_relative_r = img_to_pixel_int(local_nuclear_seg, local_relative_r_map)
 
         # distance from hub v2
         dis_to_hub_area_v2 = 0
@@ -116,8 +143,9 @@ for fov in range(total_fov):
                                      ind_ecDNA_sort_area['dis'][ind] / total_area_ecDNA
 
         data.loc[len(data.index)] = [sample, file_name, fov, i, n_nuclear_convex_dilation,
-                                     original_centroid_nuclear, area_nuclear, circ_nuclear, n_ecDNA,
-                                     total_area_ecDNA, total_area_ratio_ecDNA, dis_to_hub_area_v2]
+                                     original_centroid_nuclear, area_nuclear, circ_nuclear, mean_int_DNAFISH, n_ecDNA,
+                                     total_area_ecDNA, total_area_ratio_ecDNA, dis_to_hub_area_v2,
+                                     DNAFISH_seg_label, int_r_to_edge, int_relative_r]
 
 if not os.path.exists("%s/txt/" % output_dir):
     os.makedirs("%s/txt/" % output_dir)

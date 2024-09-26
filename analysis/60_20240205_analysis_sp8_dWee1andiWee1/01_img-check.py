@@ -16,13 +16,15 @@ master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20240205_analys
 data_dir = "%sdata/" % master_folder
 output_dir = "%sprocessed/" % master_folder
 
-sample = 'DMSO_24hr'
-file_name = '20240205_sp8_Wee1inhibitoranddegrader_acidFISH_DM_DMSO_pos9_1'
+sample = 'dWee1_125nM_24hr'
+file_name = '20240307_sp8_iWee1anddWee1_acidFISH_24hr_dWee1_125nM_24hr_9pos_1'
 total_fov = 9
 
 for i in range(total_fov):
     img_hoechst = skio.imread("%s%s/%s_s%s_ch00.tif" % (data_dir, sample, file_name, i), plugin="tifffile")
     img_DNAFISH = skio.imread("%s%s/%s_s%s_ch01.tif" % (data_dir, sample, file_name, i), plugin="tifffile")
+    # img_hoechst = skio.imread("%s%s/%s_ch00.tif" % (data_dir, sample, file_name), plugin="tifffile")
+    # img_DNAFISH = skio.imread("%s%s/%s_ch01.tif" % (data_dir, sample, file_name), plugin="tifffile")
 
     viewer = napari.Viewer()
     viewer.add_image(img_hoechst, blending='additive', colormap='blue', contrast_limits=[0, img_hoechst.max()])
