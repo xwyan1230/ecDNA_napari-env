@@ -16,11 +16,14 @@ data_dir = "%sdata/" % master_folder
 data_dir1 = "%sprocessed/" % master_folder
 output_dir = "%sprocessed/" % master_folder
 
-sample = 'dWee1_1uM_24hr'
+sample = 'iWee1_250nM_24hr'
+file_name = '20240202_Colo320DM_dWee1andiWee1_acidFISH_Colo320DM_iWee1_250nM_pos9_2'
 sets = 2
+# file_name = '20240202_Colo320DM_dWee1andiWee1_acidFISH_Colo320DM_dWee1_250nM_pos9_2'
+# file_name = '20240205_sp8_Wee1inhibitoranddegrader_acidFISH_iWee1_500nM_pos9_4'
 # file_name = '20240205_sp8_Wee1inhibitoranddegrader_acidFISH_DM_DMSO_pos9_%s' % sets
-file_name = '20240205_sp8_Wee1inhibitoranddegrader_acidFISH_dWee1_1uM_pos9_%s' % sets
-total_fov = 9
+# file_name = '20240205_sp8_Wee1inhibitoranddegrader_acidFISH_dWee1_1uM_pos9_%s' % sets
+total_fov = 5
 n_nuclear_convex_dilation = 0
 local_size = 200
 

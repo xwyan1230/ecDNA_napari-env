@@ -21,6 +21,7 @@ otsu_factor = 1.1
 circ_threshold = 0.5
 min_size = 300
 max_size = 2000
+threshold = 3000
 
 
 def img_crop(img, i):
@@ -37,9 +38,9 @@ def img_crop(img, i):
     return out
 
 
-folder = '48hr_384well'
-timepoint = 48
-format = 384
+folder = '24hr_96well'
+timepoint = 24
+format = 96
 ks = np.arange(70, 72, 1)
 print(ks)
 sample_names = ['DF-Ctrl', 'HFH-Ctrl'] + \
@@ -84,8 +85,8 @@ for k in ks:
         img_green = img_crop(skio.imread("%s%s/%s/%s_CH2.tif" % (data_dir, folder, sample, file_name), plugin="tifffile")[:, :, 1], i)
         img_red = img_crop(skio.imread("%s%s/%s/%s_CH3.tif" % (data_dir, folder, sample, file_name), plugin="tifffile")[:, :, 0], i)
         img_farred = img_crop(skio.imread("%s%s/%s/%s_CH4.tif" % (data_dir, folder, sample, file_name), plugin="tifffile")[:, :, 0], i)
-        img_nuclear_seg = seg.cell_seg_fluorescent(img_hoechst, otsu_factor=otsu_factor, max_size=max_size, maxima_threshold=1,
-                                                   min_size=min_size, circ_thresh=circ_threshold).astype(int)
+        img_nuclear_seg = seg.cell_seg_fluorescent(img_hoechst, otsu_factor=otsu_factor, max_size=max_size, maxima_threshold=1.0001,
+                                                   min_size=min_size, circ_thresh=circ_threshold, threshold=threshold).astype(int)
         nuclear_props = regionprops(img_nuclear_seg)
         centroids = [nuclear_props[j].centroid for j in range(len(nuclear_props))]
         img_seg = np.zeros_like(img_nuclear_seg)
@@ -110,9 +111,9 @@ for k in ks:
         viewer.add_image(img_red, blending='additive', colormap='red', contrast_limits=[0, 65535])
         viewer.add_image(img_farred, blending='additive', colormap='magenta', contrast_limits=[0, 65535])
         viewer.add_image(img_seg, blending='additive', contrast_limits=[0, 1])
-        if not os.path.exists("%s%s/seg/%s/" % (output_dir, folder, sample_name)):
-            os.makedirs("%s%s/seg/%s/" % (output_dir, folder, sample_name))
-        plt.imsave("%s%s/seg/%s/seg_%s.tiff" % (output_dir, folder, sample_name, i+1), dis.blending(viewer))
+        if not os.path.exists("%s%s/seg_update1/%s/" % (output_dir, folder, sample_name)):
+            os.makedirs("%s%s/seg_update1/%s/" % (output_dir, folder, sample_name))
+        plt.imsave("%s%s/seg_update1/%s/seg_%s.tiff" % (output_dir, folder, sample_name, i+1), dis.blending(viewer))
         viewer.close()
         # napari.run()
     data['exp'] = ['DF+HFH_MK1775_density_test'] * len(fov_lst)
@@ -128,5 +129,5 @@ for k in ks:
     data['emiRFP670'] = emiRFP670_lst
     if not os.path.exists("%s%s/txt/" % (output_dir, folder)):
         os.makedirs("%s%s/txt/" % (output_dir, folder))
-    data.to_csv('%s/%s/txt/%s.txt' % (output_dir, folder, sample_name), index=False, sep='\t')
+    data.to_csv('%s/%s/txt/%s_update1.txt' % (output_dir, folder, sample_name), index=False, sep='\t')
 print("DONE!")

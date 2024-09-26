@@ -12,7 +12,7 @@ import os
 
 # INPUT PARAMETERS
 # file info
-master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20240222_analysis_DF-HFH_density/"
+master_folder = "/Users/xwyan/Dropbox/LAB/ChangLab/Projects/Data/20240209_analysis_Colo320_kinaseScreen_point5uM/"
 data_dir = "%sdata/" % master_folder
 output_dir = "%sprocessed/" % master_folder
 
@@ -21,6 +21,7 @@ otsu_factor = 1.1
 circ_threshold = 0.5
 min_size = 300
 max_size = 2000
+threshold = 3000
 
 
 def img_crop(img, i):
@@ -37,36 +38,24 @@ def img_crop(img, i):
     return out
 
 
-folder = '48hr_384well'
-timepoint = 48
-format = 384
-ks = np.arange(70, 72, 1)
+folder = 'R2P2'
+rep = 2
+plate = 2
+exp = 'Colo320_GrayKinase_point5uM'
+ks = np.arange(97, 100, 1)
 print(ks)
-sample_names = ['DF-Ctrl', 'HFH-Ctrl'] + \
-               ['DMSO_4x10000-rep%s' % (x+1) for x in range(8)] + \
-               ['MK1775_4x10000-rep%s' % (x+1) for x in range(2)] + \
-               ['MK1775_4x8000-rep%s' % (x+1) for x in range(2)][::-1] + \
-               ['DMSO_4x8000-rep%s' % (x+1) for x in range(8)][::-1] + \
-               ['DMSO_4x6000-rep%s' % (x+1) for x in range(8)] + \
-               ['MK1775_4x6000-rep%s' % (x+1) for x in range(2)] + \
-               ['MK1775_4x4000-rep%s' % (x+1) for x in range(2)][::-1] + \
-               ['DMSO_4x4000-rep%s' % (x+1) for x in range(8)][::-1] + \
-               ['DMSO_4x3000-rep%s' % (x+1) for x in range(8)] + \
-               ['MK1775_4x3000-rep%s' % (x+1) for x in range(2)] + \
-               ['MK1775_4x2000-rep%s' % (x+1) for x in range(2)][::-1] + \
-               ['DMSO_4x2000-rep%s' % (x+1) for x in range(8)][::-1] + \
-               ['DMSO_4x1000-rep%s' % (x+1) for x in range(8)] + \
-               ['MK1775_4x1000-rep%s' % (x+1) for x in range(2)]
-
-samples = ['XY0%s' % (x+1) for x in range(9)] + ['XY%s' % (x+10) for x in range(63)]
+samples = ['XY0%s' % (x+1) for x in range(9)] + ['XY%s' % (x+10) for x in range(191)]
+wells = ['D%s' % (x+3) for x in range(20)] + ['E%s' % (x+3) for x in range(20)][::-1] + \
+        ['F%s' % (x+3) for x in range(20)] + ['G%s' % (x+3) for x in range(20)][::-1] + \
+        ['H%s' % (x+3) for x in range(20)] + ['I%s' % (x+3) for x in range(20)][::-1] + \
+        ['J%s' % (x+3) for x in range(20)] + ['K%s' % (x+3) for x in range(20)][::-1] + \
+        ['L%s' % (x+3) for x in range(20)] + ['M%s' % (x+3) for x in range(20)][::-1]
 
 for k in ks:
-    sample_name = sample_names[k]
     sample = samples[k]
-    group = sample_name.split('-')[0]
-    print(sample_name)
-    print(group)
+    well = wells[k]
     print(sample)
+    print(well)
     n_img = 9
 
     data = pd.DataFrame()
@@ -84,8 +73,10 @@ for k in ks:
         img_green = img_crop(skio.imread("%s%s/%s/%s_CH2.tif" % (data_dir, folder, sample, file_name), plugin="tifffile")[:, :, 1], i)
         img_red = img_crop(skio.imread("%s%s/%s/%s_CH3.tif" % (data_dir, folder, sample, file_name), plugin="tifffile")[:, :, 0], i)
         img_farred = img_crop(skio.imread("%s%s/%s/%s_CH4.tif" % (data_dir, folder, sample, file_name), plugin="tifffile")[:, :, 0], i)
-        img_nuclear_seg = seg.cell_seg_fluorescent(img_hoechst, otsu_factor=otsu_factor, max_size=max_size, maxima_threshold=1,
-                                                   min_size=min_size, circ_thresh=circ_threshold).astype(int)
+        img_nuclear_seg = seg.cell_seg_fluorescent(img_hoechst, otsu_factor=otsu_factor, max_size=max_size,
+                                                   maxima_threshold=1.0001,
+                                                   min_size=min_size, circ_thresh=circ_threshold,
+                                                   threshold=threshold).astype(int)
         nuclear_props = regionprops(img_nuclear_seg)
         centroids = [nuclear_props[j].centroid for j in range(len(nuclear_props))]
         img_seg = np.zeros_like(img_nuclear_seg)
@@ -110,17 +101,16 @@ for k in ks:
         viewer.add_image(img_red, blending='additive', colormap='red', contrast_limits=[0, 65535])
         viewer.add_image(img_farred, blending='additive', colormap='magenta', contrast_limits=[0, 65535])
         viewer.add_image(img_seg, blending='additive', contrast_limits=[0, 1])
-        if not os.path.exists("%s%s/seg/%s/" % (output_dir, folder, sample_name)):
-            os.makedirs("%s%s/seg/%s/" % (output_dir, folder, sample_name))
-        plt.imsave("%s%s/seg/%s/seg_%s.tiff" % (output_dir, folder, sample_name, i+1), dis.blending(viewer))
+        if not os.path.exists("%s%s/seg_update1/%s/" % (output_dir, folder, sample)):
+            os.makedirs("%s%s/seg_update1/%s/" % (output_dir, folder, sample))
+        plt.imsave("%s%s/seg_update1/%s/seg_%s.tiff" % (output_dir, folder, sample, i+1), dis.blending(viewer))
         viewer.close()
         # napari.run()
-    data['exp'] = ['DF+HFH_MK1775_density_test'] * len(fov_lst)
-    data['group'] = [group] * len(fov_lst)
-    data['timepoint'] = [timepoint] * len(fov_lst)
-    data['format'] = [format] * len(fov_lst)
+    data['screen'] = [exp] * len(fov_lst)
+    data['rep'] = [rep] * len(fov_lst)
+    data['plate'] = [plate] * len(fov_lst)
     data['sample'] = [sample] * len(fov_lst)
-    data['sample_name'] = [sample_name] * len(fov_lst)
+    data['well'] = [well] * len(fov_lst)
     data['fov'] = fov_lst
     data['hoechst'] = hoechst_lst
     data['H2-3'] = h23_lst
@@ -128,5 +118,5 @@ for k in ks:
     data['emiRFP670'] = emiRFP670_lst
     if not os.path.exists("%s%s/txt/" % (output_dir, folder)):
         os.makedirs("%s%s/txt/" % (output_dir, folder))
-    data.to_csv('%s/%s/txt/%s.txt' % (output_dir, folder, sample_name), index=False, sep='\t')
+    data.to_csv('%s/%s/txt/%s_update1.txt' % (output_dir, folder, sample), index=False, sep='\t')
 print("DONE!")
