@@ -133,6 +133,25 @@ def str_to_float(string: str):
     return out
 
 
+def str_to_list(string: str):
+    """
+    Transform a string into a list of floats
+
+    Examples:
+    input string: (24 characters)
+    [5.55, 6.53, 7.35, 8.91]
+    output list: (4 elements)
+    [5.55, 6.53, 7.35, 8.91]
+    :param string: str, string to be converted
+    :return: out: list
+    """
+    if len(string) > 2:
+        out = [i for i in string[2:-3].split('*\', \'')]
+    else:
+        out = []
+    return out
+
+
 def find_pos(value: int or float, increase_lst: list):
     """
     Find the position of the first value in linearly increased list that is larger than or equal to the
